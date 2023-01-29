@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/x-icon" href="https://openlayers.org/favicon.ico" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="style.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>UCR Star Quiz</title>
+    </head>
+    <body>
+        <h2>UCR Star Quiz!</h2>
+        <div id="tutorial">
+            <div class="tutorial-content">
+                <svg id="close-tutorial" class="close close-modal" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                <h1 id="tutorial-head">How To Play</h1>
+                <h2 id="tutorial-sub-head">Guess the answer in 5 tries.</h2>
+                <ul>
+                    <li>Each guess must be a valid location.</li>
+                    <li>The map display will change to show how close your guess was to the answer.</li>
+                    <li>A hint will be provided after each attempt to help you.</li>
+                </ul>
+            </div>
+        </div>
+        <div id="quiz">
+            <span id="tutorial-quiz">&quest;</span>
+            <span id="close-quiz" class="close">&times;</span>
+            <div id="title">Question of the day</div>
+            <p id="question"><a id="question-link">[start here]</a></p>
+        </div>
+        <div id="game-over">
+            <div id="game-over-content">
+                <svg id="close-answer" class="close close-modal" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                <div id="message"></div> <br><hr>
+                <div id="share">        
+                    <a id="twitter" href="https://twitter.com/intent/tweet?text=I just found this answer and scored 83! Can you do better than me?&url=https://star.cs.ucr.edu/" target="_blank" aria-label="Share on Twitter">
+                        <i class="fa fa-twitter"></i>
+                        Share on twitter!
+                    </a>
+                    <a id="fb" href="https://www.facebook.com/sharer/sharer.php?u=https://star.cs.ucr.edu/&quote=I just found this answer and scored 83! Can you do better than me?" target="_blank" aria-label="Share on Facebook">
+                        <i class="fa fa-facebook-square"></i>
+                        Share on facebook!
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div id="map"></div>
+        <script type="module" src="./scripts/main.js"></script>
+        <script id="gmaps" defer></script>
+    </body>
+</html>

@@ -34,7 +34,7 @@ export function saveData(quizData) {
     } else {
         const quiz = localStorage.getItem("quiz");
         const questionId = quiz["id"];
-        console.log(questionId);
+        // console.log(questionId);
     }
 }
 
@@ -65,6 +65,7 @@ export function displayGameOver(gameOverData) {
     const box = document.getElementById("game-over");
     const messageBox = document.getElementById("message");
     const messageText = gameOverData.message;
+    console.log(gameOverData);
     messageBox.innerHTML = messageText;
     box.style.display = "block";
 }

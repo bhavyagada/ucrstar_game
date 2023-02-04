@@ -12,9 +12,14 @@ question_id = params.getvalue("quesion_id")
 user_answer = params.getvalue("user_answer")
 current_bounding_box = params.getvalue("current_bounding_box")
 
+# to be implemented here instead of the frontend
+score = int(params.getvalue("score"))
+text = params.getvalue("message")
+direction = params.getvalue("direction")
+found = params.getvalue("found")
+
 res = {}
 message = ""
-
 # res = {
 #   "message": (str) // game over or keep going
 #   "hint": (str)
@@ -57,8 +62,13 @@ def check_answer(user_answer):
     get_score() # get overall score
     con.close()
 
+if found:
+    message = "Your score is " + str(score) + ". " + text + direction
+else:
+    message = text + direction
+
 print("Status: 200 OK")
 print("Content-Type: application/json")
 print("Access-Control-Allow-Origin: *")
 print()
-print(json.JSONEncoder().encode({"response": {"message": "Congratulations! You found the answer."}}))
+print(json.JSONEncoder().encode({"response": {"message": message}}))

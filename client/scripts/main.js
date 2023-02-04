@@ -15,14 +15,24 @@ const submit = document.getElementById("submit");
 function submitAnswer() {
 	const count = parseInt(localStorage.getItem("attemptCount"));
 	const current = map.getCurrentLocation();
-	console.log(current);
+	//console.log(current);
 
-	console.log(map.getCurrentBox());
+	// -------------------------------------------
+	// Similarity and Distance Calculations
+	const localdata = JSON.parse(localStorage.getItem("quiz"));
+	const answerLink = localdata.answer_link;
 
-	const payload = {"answer": current};
+	const currBox = map.getCurrentBox();
+	const answerBox = map.getAnswerBox(answerLink);
+	const scoreData = map.getScore(currBox, answerBox);
+
+	// -------------------------------------------	
+	
+	// const payload = {"user_answer": current, "score": score, "message": message};
+
 	let data = new URLSearchParams()
-	for (let key in payload) {
-		data.append(key, payload[key]);
+	for (let key in scoreData) {
+		data.append(key, scoreData[key]);
 	}
 	console.log(data);
 
@@ -69,8 +79,6 @@ function submitAnswer() {
 	// TODO: get it from localStorage
 	const question = quizData.question;
 	const questionLink = quizData.question_link;
-	const answerLink = quizData.answer_link;
-	console.log(map.getAnswerBox(answerLink));
 	
   	// get the google maps api url and add it in html
   	let gmaps_script = document.getElementById("gmaps");

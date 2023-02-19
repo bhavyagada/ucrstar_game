@@ -2,30 +2,29 @@
 
 import json
 import utils
+from bson import ObjectId
 from pymongo import MongoClient
+
+# temporary - populate db with some data
+# utils.populate_db()
 
 # getting a random question from db
 def get_question():
     con = MongoClient(utils.MONGODB_URL)
-    db = con.test
-    quiz = db.quiz.aggregate([
-        {"$match" : {"done" : False}},
-        {"$sample" : {"size" : 1}}
-    ])
+    db = con.ucrstar
+    game = db.game.find_one({"date": str(utils.TODAY)})
     con.close()
-    if quiz:
-        return utils.cursor_to_json(quiz)
+    if game:
+        return game
     return None
 
 # create data object to be sent
 data = {}
-quiz = get_question()
-data["quiz"] = {}
-for field in quiz[0]:
-    if field == '_id':
-        data["quiz"]["id"] = quiz[0][field]["$oid"]
-    else:
-        data["quiz"][field] = quiz[0][field]
+game = get_question()
+data["game"] = {}
+for field in game:
+    if field != '_id':
+        data["game"][field] = game[field]
 data["gmap_api_url"] = utils.get_gmaps_script_url()
 
 # send data

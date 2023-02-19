@@ -1,5 +1,6 @@
 import * as map from './map';
 import * as helpers from './helpers';
+import * as olExtent from 'ol/extent';
 
 // global variables
 const quiz = document.getElementById("quiz");
@@ -14,21 +15,7 @@ const submit = document.getElementById("submit");
 // submit answer (#TODO also send attempt number for corresponding hint number) to receive hint if answer is wrong
 function submitAnswer() {
 	const count = parseInt(localStorage.getItem("attemptCount"));
-	const current = map.getCurrentLocation();
-	//console.log(current);
-
-	// -------------------------------------------
-	// Similarity and Distance Calculations
-	const localdata = JSON.parse(localStorage.getItem("quiz"));
-	const answerLink = localdata.answer_link;
-
-	const currBox = map.getCurrentBox();
-	const answerBox = map.getAnswerBox(answerLink);
-	const scoreData = map.getScore(currBox, answerBox);
-
-	// -------------------------------------------	
-	
-	// const payload = {"user_answer": current, "score": score, "message": message};
+	const scoreData = map.getScore();
 
 	let data = new URLSearchParams()
 	for (let key in scoreData) {
@@ -43,48 +30,40 @@ function submitAnswer() {
     	});
 
     	const responseData = await response.json();
-    	console.log(responseData);
+    	console.log(responseData.response);
 
-    	if (count === -1) {
-    		helpers.displayGameOver(responseData.response);
-    	}
+		// helpers.displayHint(responseData.response, count);
 	})();
 
 	// count number of attemps and stop after 5 attempts
 	helpers.attemptCount();
-	if (count === -1) {
-		console.log("Game Over!");
-	} else if (count > 0 && count < 6) {
-		console.log("Hint number:", count);
-	}
 }
 
 // fetch question
 (async() => {
 	const response = await fetch("http://localhost:8000/cgi-bin/app.cgi");
 	const responseData = await response.json();
-	const data = responseData;
-	const quizData = data.quiz;
-	console.log(quizData);
+	let gameData = "";
 
-	// save question locally
-	helpers.saveData(quizData);
-
-	// set attempt count
-	if (!localStorage.getItem("attemptCount")) {
-    	localStorage.setItem("attemptCount", 1); // game hasn't started
+	if (!localStorage.getItem("game")) {
+		gameData = responseData.game;
+		helpers.saveData(gameData); // save question locally
+	} else {
+		gameData = JSON.parse(localStorage.getItem("game"));
 	}
+	console.log(gameData);
 
-	// get the question, initial map link and answer link
-	// TODO: get it from localStorage
-	const question = quizData.question;
-	const questionLink = quizData.question_link;
-	
-  	// get the google maps api url and add it in html
-  	let gmaps_script = document.getElementById("gmaps");
-  	gmaps_script.src = data.gmap_api_url
-
+	const question = gameData.question;
+	const questionLink = gameData.question_link;
 	helpers.displayQuestion(question, questionLink);
+
+	// has to be deleted later
+	const box = gameData.answer_stats;
+	map.displayAnswerBox(box.bottom_left.concat(box.top_right));
+
+	// get the google maps api url and add it in html
+	const gmaps_script = document.getElementById("gmaps");
+	gmaps_script.src = responseData.gmap_api_url
 	helpers.displayMap(questionLink);
 })();
 

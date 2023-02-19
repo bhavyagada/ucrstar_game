@@ -3,7 +3,7 @@ import { view, transformLocation } from './map';
 // create the google maps search box
 export function initAutocomplete() {
     const input = document.getElementById("search");
-    const searchBox = new google.maps.places.SearchBox(input);
+    new google.maps.places.SearchBox(input);
 }
 
 // to open or close modal => false - open, true - close
@@ -28,14 +28,15 @@ export function displayQuestion(question, questionLink) {
 }
 
 // save quiz progress data
-export function saveData(quizData) {
-    if (!localStorage.getItem("quiz")) {
-        localStorage.setItem("quiz", JSON.stringify(quizData));
-    } else {
-        const quiz = localStorage.getItem("quiz");
-        const questionId = quiz["id"];
-        // console.log(questionId);
+export function saveData(gameData) {
+    // save game data
+    if (!localStorage.getItem("game")) {
+        localStorage.setItem("game", JSON.stringify(gameData));
     }
+    // save attempt count
+	if (!localStorage.getItem("attemptCount")) {
+    	localStorage.setItem("attemptCount", 1); // game hasn't started
+	}
 }
 
 // get location coordinates and zoom level from url
@@ -60,13 +61,71 @@ export function displayMap(url) {
     view.animate({center: center, zoom: zoom, duration: 2000});
 }
 
-// display hint, score or congratulations text
-export function displayGameOver(gameOverData) {
+function displayGameOver(messageBox, win=false) {
+    const topScore = localStorage.getItem("score");
+    if (win) {
+        messageBox.innerHTML = `Congratulations! You got the perfect score!<br> Come back tomorrow for a new game!`
+    } else {
+        messageBox.innerHTML = `Game Over! You used up all your attempts!<br> Your highest score is ${topScore}!`;
+    }
+    const share = document.getElementById("share");
+    const text = `I just won this game! Can you beat my top score ${topScore}?`;
+    share.innerHTML = `<br><hr>
+        <a id="twitter" href="https://twitter.com/intent/tweet?text=${text}&url=https://star.cs.ucr.edu/" target="_blank" aria-label="Share on Twitter">
+            <i class="bi bi-twitter" style="font-size:20px;"></i>
+            Share on twitter!
+        </a>
+        <a id="fb" href="https://www.facebook.com/sharer/sharer.php?u=https://star.cs.ucr.edu/&quote=${text}" target="_blank" aria-label="Share on Facebook">
+            <i class="bi bi-facebook" style="font-size:20px;"></i>
+            Share on facebook!
+        </a>
+    `
+}
+
+// display hint, score and corresponding text
+export function displayHint(gameStats, count) {
+    console.log(gameStats, count);
     const box = document.getElementById("game-over");
     const messageBox = document.getElementById("message");
-    const messageText = gameOverData.message;
-    console.log(gameOverData);
-    messageBox.innerHTML = messageText;
+    const overlap = gameStats.overlap;
+    const score = gameStats.score;
+    const hint = gameStats.hint;
+    const message = gameStats.message;
+    const icons = {
+        "zoom_in": "bi-zoom-in",
+        "zoom_out": "bi-zoom-out",
+        "east": "bi-arrow-right",
+        "west": "bi-arrow-left",
+        "north": "bi-arrow-up",
+        "south": "bi-arrow-down",
+        "south_east": "bi-arrow-down-right",
+        "south_west": "bi-arrow-down-left",
+        "north_east": "bi-arrow-up-right",
+        "north_west": "bi-arrow-up-left"
+    }
+
+    if (!localStorage.getItem("score")) {
+        localStorage.setItem("score", score);
+    } else {
+        const lastScore = localStorage.getItem("score");
+        if (score > lastScore && count !== -1) {
+            localStorage.setItem("score", score);
+            if (score === 100) {
+                displayGameOver(messageBox, true); // won
+                localStorage.setItem("attemptCount", -1);
+            }
+        }
+    }
+
+    if (count > 0 && count < 6) {
+        if (overlap) {
+            messageBox.innerHTML = `Here's a hint to guide you:<br><i class="bi ${icons[hint]}" style="font-size:45px;"></i><br>Your score is ${score}!<br> ${message}`
+        } else {
+            messageBox.innerHTML = `Here's a hint to guide you:<br><i class="bi ${icons[hint]}" style="font-size:45px;"></i><i class="bi ${icons[hint]}" style="font-size:45px;"></i><br>Your score is ${score}!<br> ${message}`
+        }
+    } else {
+        displayGameOver(messageBox, false); // lost
+    }
     box.style.display = "block";
 }
 

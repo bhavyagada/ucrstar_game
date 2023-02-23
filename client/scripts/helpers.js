@@ -1,4 +1,4 @@
-import { view, transformLocation } from './map';
+import { view, transform } from './map';
 
 // create the google maps search box
 export function initAutocomplete() {
@@ -56,7 +56,7 @@ export function getMapDetailsFromUrl(url) {
 // display location on map
 export function displayMap(url) {
     const [location, zoom] = getMapDetailsFromUrl(url);
-    const center = transformLocation(location)
+    const center = transform([parseFloat(location[1]), parseFloat(location[0])], 'EPSG:4326', 'EPSG:3857');
   
     view.animate({center: center, zoom: zoom, duration: 2000});
 }

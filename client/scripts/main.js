@@ -1,6 +1,5 @@
 import * as map from './map';
 import * as helpers from './helpers';
-import * as olExtent from 'ol/extent';
 
 // global variables
 const quiz = document.getElementById("quiz");
@@ -57,6 +56,10 @@ function submitAnswer() {
 	const questionLink = gameData.question_link;
 	helpers.displayQuestion(question, questionLink);
 
+	const dataset = gameData.dataset;
+	const dataset_type = gameData.dataset_type;
+	console.log(dataset, dataset_type);
+
 	// has to be deleted later
 	const box = gameData.answer_stats;
 	map.displayAnswerBox(box.bottom_left.concat(box.top_right));
@@ -65,6 +68,7 @@ function submitAnswer() {
 	const gmaps_script = document.getElementById("gmaps");
 	gmaps_script.src = responseData.gmap_api_url
 	helpers.displayMap(questionLink);
+	map.displayDataset(dataset, dataset_type);
 })();
 
 // to open or close modal => false - open, true - close

@@ -47,17 +47,6 @@ DATA = [{
 }]
 
 DUMMY_DATA = [{
-   "question": "Can you spot China []",
-    "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
-    "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
-    "answer_stats": {
-        "bottom_left": [ 73.6753792663, 18.197700914 ],
-        "top_right": [ 135.026311477, 53.4588044297 ]
-    },
-    "dataset":"?OSM2015/all_objects",
-    "dataset_type": "large",
-    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13", 
-}, {
     "question": "Can you spot Camp Nou using sports dataset on UCR-Star? Here is a starting point for you on UCR-Star []",
     "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
     "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
@@ -65,9 +54,31 @@ DUMMY_DATA = [{
         "bottom_left": [ 2.120406723526001, 41.37934110772656 ],
         "top_right": [ 2.125449276473999, 41.38250885369828 ]
     },
-    "dataset":"?OSM2015/sports",
+    "dataset":"OSM2015/sports",
     "dataset_type": "large",
     "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13"
+}, {
+   "question": "Can you spot China []",
+    "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
+    "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
+    "answer_stats": {
+        "bottom_left": [ 73.6753792663, 18.197700914 ],
+        "top_right": [ 135.026311477, 53.4588044297 ]
+    },
+    "dataset":"OSM2015/lakes",
+    "dataset_type": "large",
+    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13", 
+},{
+    "question": "Can you spot California []",
+    "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
+    "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
+    "answer_stats": {
+        "bottom_left": [ -124.409591, 32.534156 ],
+        "top_right": [ -114.131211, 42.009518 ]
+    },
+    "dataset":"Riverside/Subdivision",
+    "dataset_type": "small",
+    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
 }, {
    "question": "Can you spot New Zealand []",
     "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
@@ -76,7 +87,7 @@ DUMMY_DATA = [{
         "bottom_left": [ 166.509144322, -46.641235447 ],
         "top_right": [ 178.517093541, -34.4506617165 ]
     },
-    "dataset":"?OSM2015/buildings",
+    "dataset":"OSM2015/buildings",
     "dataset_type": "large",
     "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13", 
 }, {
@@ -87,20 +98,9 @@ DUMMY_DATA = [{
         "bottom_left": [ 68.1766451354, 7.96553477623 ],
         "top_right": [ 97.4025614766, 35.4940095078 ]
     },
-    "dataset":"?OSM2015/all_nodes",
+    "dataset":"OSM2015/all_nodes",
     "dataset_type": "large",
     "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13", 
-}, {
-    "question": "Can you spot California []",
-    "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
-    "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
-    "answer_stats": {
-        "bottom_left": [ -124.409591, 32.534156 ],
-        "top_right": [ -114.131211, 42.009518 ]
-    },
-    "dataset":"?OSM2015/lakes",
-    "dataset_type": "large",
-    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
 }]
 
 def populate_db():

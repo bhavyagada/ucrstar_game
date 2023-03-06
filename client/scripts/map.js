@@ -2,7 +2,7 @@ import { Feature, Map, View, Overlay } from 'ol';
 import TileLayer from 'ol/layer/Tile';
 import {OSM} from 'ol/source';
 import { Control, defaults as defaultControls } from 'ol/control';
-import { transform, transformExtent } from 'ol/proj';
+import { transform, transformExtent, getTransform } from 'ol/proj';
 import * as olExtent from 'ol/extent';
 import { fromExtent } from 'ol/geom/Polygon';
 import VectorLayer from 'ol/layer/Vector';
@@ -10,28 +10,56 @@ import VectorSource from 'ol/source/Vector';
 import { Style, Stroke, Fill } from 'ol/style';
 import XYZ from 'ol/source/XYZ';
 import GeoJSON from 'ol/format/GeoJSON';
-import { initAutocomplete, getMapDetailsFromUrl } from "./helpers";
 
 // create custom search and submit controls
 class CustomControls extends Control {
     constructor(opt_options) {
         const options = opt_options || {};
 
-        const search = document.createElement('input');
+        const quiz = document.createElement("div");
+        quiz.id = "quiz";
+
+        const tutorialQuiz = document.createElement("span");
+        tutorialQuiz.id = "tutorial-quiz";
+        tutorialQuiz.innerHTML = '<i class="bi bi-question-diamond"></i>';
+
+        const history = document.createElement("span");
+        history.id = "history";
+        history.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
+
+        const title = document.createElement("div");
+
+        const titleText = document.createElement("p");
+        titleText.id = "title";
+        titleText.appendChild(tutorialQuiz);
+        titleText.innerHTML += "Question of the day";
+        titleText.appendChild(history);
+
+        title.appendChild(titleText);
+
+        const question = document.createElement("p");
+        question.id = "question";
+
+        const questionA = document.createElement("a");
+        questionA.id = "question-link";
+        questionA.innerText = "[start here]";
+
+        question.appendChild(questionA);
+        quiz.append(title, document.createElement("hr"), question);
+
+        const search = document.createElement("input");
         search.type = "text";
-        search.placeholder = 'Go to location';
-        search.id = 'search';
+        search.placeholder = "Go to location";
+        search.id = "search";
     
-        const submit = document.createElement('input');
+        const submit = document.createElement("input");
         submit.type = "submit";
         submit.value = "submit answer";
-        submit.id = 'submit';
-        // submit.onclick = function() { return submitAnswer(); };
+        submit.id = "submit";
   
-        const element = document.createElement('div');
-        element.className = 'custom-controls ol-unselectable ol-control';
-        element.appendChild(search);
-        element.appendChild(submit)
+        const element = document.createElement("div");
+        element.className = "custom-controls ol-unselectable ol-control";
+        element.append(quiz, submit, search);
   
         super({
             element: element,
@@ -67,21 +95,23 @@ const map = new Map({
     view: view
 });
 
-window.initAutocomplete = initAutocomplete;
-
-// constants
-const tooltip = document.getElementById("tooltip");
-const overlay = tooltipOverlay[0];
-
-// TODO: Move all following logic to backend
-// get answer box
-export function getAnswerBox(answerLink) {
-    const [location, zoom] = getMapDetailsFromUrl(answerLink);
-    const center = transform([parseFloat(location[1]), parseFloat(location[0])], 'EPSG:4326', 'EPSG:3857')
-
-    const answerView = new View({ center: center, zoom: zoom });
-    return transformExtent(answerView.calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326')
-}
+// create the google maps search box
+window.initAutocomplete = function initAutocomplete() {
+    const input = document.getElementById("search");
+    const searchBox = new google.maps.places.Autocomplete(input);
+    searchBox.addListener('place_changed', function() {
+        const place = searchBox.getPlace();
+        // console.log(place);
+        const southWestY = place.geometry.viewport.Ka.lo;
+        const southWestX = place.geometry.viewport.Va.lo;
+        const northEastY = place.geometry.viewport.Ka.hi;
+        const northEastX = place.geometry.viewport.Va.hi;
+        const extent = [southWestY, southWestX, northEastY, northEastX];
+        const transformedExtent = olExtent.applyTransform(extent, getTransform('EPSG:4326', 'EPSG:3857'));
+        const resolution = view.getResolutionForExtent(transformedExtent, map.getSize());
+        view.animate({ center: olExtent.getCenter(transformedExtent), duration: 3000, zoom: view.getZoomForResolution(resolution) });
+    });
+};
 
 // display answer for debuggin: TODO: delete later
 export function displayAnswerBox(extent) {
@@ -132,9 +162,10 @@ function writeValueToHTML(attributeValue) {
   }
 
 function displayXYZData(data, position) {
+    const tooltip = document.getElementById("tooltip");
     tooltip.style.display = data ? '' : 'none';
     if (data) {
-        overlay.setPosition(position);
+        tooltipOverlay[0].setPosition(position);
         const attributeNames = Object.keys(data);
         let html = "";
         for (let i = 0; i < attributeNames.length; i++) {
@@ -148,13 +179,14 @@ function displayXYZData(data, position) {
 }
 
 function displayGeoJSONData(event) {
+    const tooltip = document.getElementById("tooltip");
     const pixel = event.pixel;
     const feature = map.forEachFeatureAtPixel(pixel, function(feature) {
         return feature;
     });
     tooltip.style.display = feature ? '' : 'none';
     if (feature) {
-        overlay.setPosition(event.coordinate);
+        tooltipOverlay[0].setPosition(event.coordinate);
         const attributeNames = feature.getKeys();
         let html = "";
         for (let i = 0; i < attributeNames.length; i++) {
@@ -223,4 +255,8 @@ export function displayDataset(dataset, type) {
     }
 }
 
-export {view, transform}
+export function removeDataset() {
+    map.removeLayer(map.getLayers().item(2));
+}
+
+export {map as osmMap, view, transform, getTransform, olExtent, transformExtent}

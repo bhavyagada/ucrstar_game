@@ -1,56 +1,28 @@
 import * as map from './map';
 import * as helpers from './helpers';
 
-// global variables
-const quiz = document.getElementById("quiz");
-const closequiz = document.getElementById("close-quiz");
-const tutorial = document.getElementById("tutorial");
-const openTutorial = document.getElementById("tutorial-quiz");
-const closetutorial = document.getElementById("close-tutorial");
-const gameover = document.getElementById("game-over");
-const closegameover = document.getElementById("close-answer");
-const submit = document.getElementById("submit");
-
-// submit answer (#TODO also send attempt number for corresponding hint number) to receive hint if answer is wrong
-function submitAnswer() {
-	const count = parseInt(localStorage.getItem("attemptCount"));
-	const scoreData = map.getScore();
-
-	let data = new URLSearchParams()
-	for (let key in scoreData) {
-		data.append(key, scoreData[key]);
-	}
-	console.log(data);
-
-	(async() => {
-		const response = await fetch("http://localhost:8000/cgi-bin/answer.cgi", {
-    		method: 'POST',
-    		body: data // send answer attempt to server for check
-    	});
-
-    	const responseData = await response.json();
-    	console.log(responseData.response);
-
-		// helpers.displayHint(responseData.response, count);
-	})();
-
-	// count number of attemps and stop after 5 attempts
-	helpers.attemptCount();
-}
-
 // fetch question
+let gameData = "";
 (async() => {
 	const response = await fetch("http://localhost:8000/cgi-bin/app.cgi");
 	const responseData = await response.json();
-	let gameData = "";
+	console.log(responseData);
 
+	// save game data
 	if (!localStorage.getItem("game")) {
-		gameData = responseData.game;
-		helpers.saveData(gameData); // save question locally
+		gameData = responseData.game
+		localStorage.setItem("game", JSON.stringify(gameData));
 	} else {
 		gameData = JSON.parse(localStorage.getItem("game"));
 	}
-	console.log(gameData);
+	// save attempt count
+	if (!localStorage.getItem("attemptCount")) {
+		localStorage.setItem("attemptCount", 1); // game hasn't started
+	}
+
+	// get the google maps api url and add it in html
+	const gmaps_script = document.getElementById("gmaps");
+	gmaps_script.src = responseData.gmap_api_url
 
 	const question = gameData.question;
 	const questionLink = gameData.question_link;
@@ -64,20 +36,71 @@ function submitAnswer() {
 	const box = gameData.answer_stats;
 	map.displayAnswerBox(box.bottom_left.concat(box.top_right));
 
-	// get the google maps api url and add it in html
-	const gmaps_script = document.getElementById("gmaps");
-	gmaps_script.src = responseData.gmap_api_url
-	helpers.displayMap(questionLink);
+	// start position with dataset
+	helpers.displayMap(questionLink)
 	map.displayDataset(dataset, dataset_type);
+	const openTutorial = document.getElementById("tutorial-quiz");
+	openTutorial.onclick = function() { 
+		return helpers.tutorialMode(true, dataset, dataset_type);
+	}
 })();
 
-// to open or close modal => false - open, true - close
-helpers.toggleModal(tutorial, openTutorial, false);
-helpers.toggleModal(tutorial, closetutorial, true);
-helpers.toggleModal(quiz, closequiz, true);
-helpers.toggleModal(gameover, closegameover, true);
+// submit answer (#TODO also send attempt number for corresponding hint number) to receive hint if answer is wrong
+const submit = document.getElementById("submit");
+submit.onclick = function submitAnswer() {
+	const count = parseInt(localStorage.getItem("attemptCount"));
+	const scoreData = map.getScore();
 
-// to drag the quiz box around the screen
-helpers.dragElement(quiz);
+	let data = new URLSearchParams()
+	for (let key in scoreData) {
+		data.append(key, scoreData[key]);
+	}
+	console.log(data);
 
-submit.onclick = function() { return submitAnswer(); };
+	(async() => {
+		const response = await fetch("http://localhost:8000/cgi-bin/answer.cgi", {
+			method: 'POST',
+			body: data // send answer attempt to server for check
+		});
+
+		const responseData = await response.json();
+		console.log(responseData.response);
+
+		// save scores locally
+		if (!localStorage.getItem("scores")) {
+			localStorage.setItem("scores", JSON.stringify([responseData.response.score]));
+		} else {
+			let localScoreData = JSON.parse(localStorage.getItem("scores"));
+			localScoreData.push(responseData.response.score);
+			localStorage.setItem("scores", JSON.stringify(localScoreData));
+		}
+
+		helpers.displayHint(responseData.response, count, false);
+	})();
+
+	// save attempt history
+	if (!localStorage.getItem("history")) {
+		localStorage.setItem("history", JSON.stringify([scoreData]));
+	} 
+	if (localStorage.getItem("history") && count > 0 && count < 6){
+		let historyData = JSON.parse(localStorage.getItem("history"));
+		console.log(historyData);
+		historyData.push(scoreData);
+		localStorage.setItem("history", JSON.stringify(historyData));
+	}
+	// count number of attemps and stop after 5 attempts
+	helpers.attemptCount();
+}
+
+// to open or close modal
+const gameover = document.getElementById("game-over");
+const closegameover = document.getElementById("close-answer");
+closegameover.onclick = function() {
+	gameover.style.display = gameover.style.display === "block" ? "none" : "block";
+}
+
+// show attempt history
+const history = document.getElementById("history");
+history.onclick = function() { 
+	return helpers.historyMode(false);
+};

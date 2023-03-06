@@ -4,11 +4,10 @@ html, body {
   margin: 0;
   height: 100%;
   font-family: 'Open Sans Condensed', sans-serif;
+  scrollbar-width: none;
 }
 #map {
   position: absolute;
-  top: 10em;
-  bottom: 0;
   height: 100%;
   width: 100%;
 }
@@ -24,11 +23,36 @@ html, body {
 .custom-controls {
   top: 0.5em;
   right: 0.5em;
+  width: 25%;
   background: none;
   display: flex;
   flex: 1;
   flex-flow: column wrap;
   justify-content: flex-end;
+}
+.introjs-overlay {
+  backdrop-filter: blur(3px);
+}
+.introjs-tooltip-header {
+  padding-left: 15px;
+  padding-right: 5px;
+}
+.introjs-tooltiptext {
+  padding: 10px 15px 5px;
+}
+.introjs-tooltiptext > * {
+  margin: 5px 0;
+}
+.introjs-skipbutton {
+  color: #fbfbfb;
+}
+.tutorialMode  {
+  display: inline-block;
+  border: 1px solid #eee;
+  border-radius: 0.52em;
+  box-sizing: border-box;
+  text-decoration: none;
+  background-color:#2A2B2E;
 }
 input[type="text"], input[type="submit"] {
   width: 100%;
@@ -41,8 +65,69 @@ input[type="text"], input[type="submit"] {
   border-radius: 5px;
 }
 input[type="submit"] {
-	background:#d3d3d3;
-	color:#000;
+  margin-top: 3px;
+  background:#052F5F;
+	color:#eee;
+}
+#quiz {
+  position: relative;
+  overflow: hidden;
+  margin: 2px;
+  width: 100%;
+  font-size: 17px;
+  box-sizing: border-box;
+  border-radius: 5px;
+  text-align: center;
+  background: #052F5F;
+  color: #eee;
+  border: 1px solid #d3d3d3;
+}
+#question {
+  margin: 0;
+  padding: 5px;
+  width: 100%;
+  font-size: 17px;
+  box-sizing: border-box;
+  background:#eee;
+	color:#332D2D;
+}
+hr {
+  margin: 0;
+}
+#title {
+  margin: 0;
+  padding: 5px;
+  width: 100%;
+  font-size: 17px;
+}
+#tutorial-quiz {
+  font-size: 17px;
+  float: left;
+  font-weight: bold;
+  color: #fff;
+}
+#history {
+  font-size: 17px;
+  float: right;
+  margin-right: 7px;
+  font-weight: bold;
+  color: #eee;
+}
+.gotobutton{
+  display: inline-block;
+  padding: 0.75em;
+  border: 0.1em solid #332D2D;
+  border-radius: 0.12em;
+  box-sizing: border-box;
+  text-decoration: none;
+  color:#332D2D;
+  background-color:#eee;
+  text-align: center;
+  transition: all 0.2s;
+}
+.gotobutton:hover{
+  color:#eee;
+  background-color:#332D2D;
 }
 #tutorial {
   display: none;
@@ -57,80 +142,35 @@ input[type="submit"] {
   padding-top: 100px;
   background-color: rgba(0,0,0,0.8);
 }
-.tutorial-content {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #030303;
-  color: #f1f1f1;
-  margin: 0 auto;
-  padding: 32px;
-  width: 35%;
-  border: 1px solid #888;
-  border-radius: 8px;
-}
-#tutorial-head {
-  margin-bottom: 0;
-}
-#tutorial-sub-head {
-  margin-top: 0;
-  font-size: medium;
-}
-#quiz {
-  right: 0;
-  top: 15px;
-  position: absolute;
-  z-index: 1;
-  width: 30%;
-  font-size: 17px;
-  text-align: center;
-  background-color: #f1f1f1;
-  border: 1px solid #d3d3d3;
-}
-#title {
-  padding: 5px;
-  cursor: move;
-  z-index: 2;
-  background-color: #030303;
-  color: #fff;
-}
-#tutorial-quiz {
-  z-index: 2;
-  padding: 5px;
-  color: white;
-  float: left;
-  font-weight: bold;
-}
-#tutorial-quiz:hover {
+#tutorial-quiz:hover, #history:hover, #submit:hover {
   text-decoration: none;
   cursor: pointer;
 }
 #game-over {
-  color: black;
+  backdrop-filter: blur(3px);
   display: none;
   position: fixed;
-  justify-content: center;
-  align-items: center;
   z-index: 99;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  padding-top: 100px;
-  background-color: rgba(0,0,0,0.8);
+  padding-top: 150px;
 }
 #game-over-content {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #030303;
-  color: #f1f1f1;
+  font-size: medium;
+  background-color:rgba(255, 255, 255, 0.9);
+  /* background-color: #DADBDD; */
+  color: #333;
   margin: 0 auto;
   padding: 32px;
-  width: 35%;
+  width: 37%;
   border: 1px solid #888;
   border-radius: 8px;
 }
 .close {
-  z-index: 2;
   padding: 5px;
-  color: white;
   float: right;
   font-weight: bold;
 }
@@ -140,6 +180,9 @@ input[type="submit"] {
 .close:hover, .close:focus {
   text-decoration: none;
   cursor: pointer;
+}
+#share {
+  text-align: center;
 }
 #twitter {
   text-decoration: none;
@@ -156,4 +199,15 @@ input[type="submit"] {
   padding: 4px 6px;
   border: 1px solid black;
   border-radius: 5px;
+}
+#zoom_in.animate {
+  animation: 4s linear 0s infinite alternate zoom_in;
+}
+@keyframes zoom_in {
+  from {
+    transform: scale(2);
+  }
+  to {
+    transform: scale(1);
+  }
 }

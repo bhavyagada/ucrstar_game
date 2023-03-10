@@ -12,7 +12,7 @@ npm start
 ## env files
 
 Create ```.env.development``` and ```.env.production``` to store environment specific variables to be used in the application.  
-For now, it only contains the API_URL (localhost:8000), but more can be added later.
+For now, it only contains the key VITE_API_URL (localhost:8000 for development), but more can be added later.
 
 ## to build for production
 

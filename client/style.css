@@ -107,27 +107,12 @@ hr {
   color: #fff;
 }
 #history {
-  font-size: 17px;
   float: right;
-  margin-right: 7px;
   font-weight: bold;
-  color: #eee;
-}
-.gotobutton{
-  display: inline-block;
-  padding: 0.75em;
-  border: 0.1em solid #332D2D;
-  border-radius: 0.12em;
-  box-sizing: border-box;
-  text-decoration: none;
-  color:#332D2D;
-  background-color:#eee;
-  text-align: center;
-  transition: all 0.2s;
-}
-.gotobutton:hover{
-  color:#eee;
-  background-color:#332D2D;
+  background-color: #332D2D;
+  width: 100%;
+  margin: 2px;
+  border-radius: 5px;
 }
 #tutorial {
   display: none;
@@ -200,14 +185,35 @@ hr {
   border: 1px solid black;
   border-radius: 5px;
 }
-#zoom_in.animate {
-  animation: 4s linear 0s infinite alternate zoom_in;
+#blur-back {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(15px);
+  z-index: 0;
 }
-@keyframes zoom_in {
-  from {
-    transform: scale(2);
-  }
-  to {
-    transform: scale(1);
-  }
+#counter {
+  display: none;
+  position: relative;
+  font-size: 150px;
+  margin-top: 200px;
+  font-weight: bold;
+  color: #000;
+  z-index: 1;
+}
+#hint {
+  display: none;
+  position: relative;
+  font-size: 200px;
+  margin-top: 250px;
+  font-weight: bold;
+  color: #000;
+  z-index: 1;
+}
+.ol-overlaycontainer-stopevent #counter {
+  text-align: center;
+  align-items: center;
 }

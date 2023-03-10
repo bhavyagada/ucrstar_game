@@ -4,7 +4,8 @@ import * as helpers from './helpers';
 // fetch question
 let gameData = "";
 (async() => {
-	const response = await fetch("http://localhost:8000/cgi-bin/app.cgi");
+	console.log(import.meta.env.VITE_BASE_URL)
+	const response = await fetch(`${import.meta.env.VITE_BASE_URL}/cgi-bin/app.cgi`);
 	const responseData = await response.json();
 	console.log(responseData);
 
@@ -33,8 +34,8 @@ let gameData = "";
 	console.log(dataset, dataset_type);
 
 	// has to be deleted later
-	const box = gameData.answer_stats;
-	map.displayAnswerBox(box.bottom_left.concat(box.top_right));
+	// const box = gameData.answer_stats;
+	// map.displayAnswerBox(box.bottom_left.concat(box.top_right));
 
 	// start position with dataset
 	helpers.displayMap(questionLink)
@@ -58,7 +59,7 @@ submit.onclick = function submitAnswer() {
 	console.log(data);
 
 	(async() => {
-		const response = await fetch("http://localhost:8000/cgi-bin/answer.cgi", {
+		const response = await fetch(`${import.meta.env.VITE_BASE_URL}/cgi-bin/answer.cgi`, {
 			method: 'POST',
 			body: data // send answer attempt to server for check
 		});
@@ -66,28 +67,33 @@ submit.onclick = function submitAnswer() {
 		const responseData = await response.json();
 		console.log(responseData.response);
 
-		// save scores locally
-		if (!localStorage.getItem("scores")) {
-			localStorage.setItem("scores", JSON.stringify([responseData.response.score]));
-		} else {
-			let localScoreData = JSON.parse(localStorage.getItem("scores"));
-			localScoreData.push(responseData.response.score);
-			localStorage.setItem("scores", JSON.stringify(localScoreData));
+		// save attempt history
+		scoreData["hint"] = responseData.response.hint;
+		scoreData["score"] = responseData.response.score;
+		if (!localStorage.getItem("history")) {
+			localStorage.setItem("history", JSON.stringify([scoreData]));
+		} else if (localStorage.getItem("history") && count > 0 && count < 6){
+			let historyData = JSON.parse(localStorage.getItem("history"));
+			console.log(historyData);
+			historyData.push(scoreData);
+			localStorage.setItem("history", JSON.stringify(historyData));
 		}
 
-		helpers.displayHint(responseData.response, count, false);
+		async function myFunction() {
+			document.getElementById("blur-back").style.display = "block";
+			await helpers.animateScore(responseData.response.score);
+			await new Promise(resolve => setTimeout(resolve, 2500));
+			document.getElementById("counter").style.display = "none";
+			await helpers.animateHint(responseData.response, count);
+			await new Promise(resolve => setTimeout(resolve, 5000));
+			document.getElementById("hint").style.display = "none";
+			document.getElementById("blur-back").style.display = "none";
+			await helpers.historyMode(false);
+		}
+		myFunction();
+		// helpers.displayHint(responseData.response, count, false);
 	})();
 
-	// save attempt history
-	if (!localStorage.getItem("history")) {
-		localStorage.setItem("history", JSON.stringify([scoreData]));
-	} 
-	if (localStorage.getItem("history") && count > 0 && count < 6){
-		let historyData = JSON.parse(localStorage.getItem("history"));
-		console.log(historyData);
-		historyData.push(scoreData);
-		localStorage.setItem("history", JSON.stringify(historyData));
-	}
 	// count number of attemps and stop after 5 attempts
 	helpers.attemptCount();
 }
@@ -99,8 +105,6 @@ closegameover.onclick = function() {
 	gameover.style.display = gameover.style.display === "block" ? "none" : "block";
 }
 
-// show attempt history
-const history = document.getElementById("history");
-history.onclick = function() { 
+window.onload = () => {
 	return helpers.historyMode(false);
-};
+}

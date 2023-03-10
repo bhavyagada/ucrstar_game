@@ -37,7 +37,15 @@ function displayGameOver(messageBox, win=false, tutorial) {
     if (tutorial) {
         topScore = 100;
     } else {
-        topScore = Math.max(...JSON.parse(localStorage.getItem("scores")));
+        topScore = 0;
+        for (const attempt in JSON.parse(localStorage.getItem("history"))) {
+            for(const [key, value] of Object.entries(attempt)) {
+                if(value["score"] > topScore) {
+                    topScore = value;
+                }
+            }    
+        }
+        console.log(topScore);
     }
     if (win) {
         messageBox.innerHTML = `Congratulations! You got the perfect score of ${topScore}!<br> Come back tomorrow for a new game!<br>`
@@ -258,7 +266,7 @@ export function tutorialMode(mode, dataset, type) {
                 document.getElementById("game-over").style.display = "none";
             }
             if (intro._currentStep === 6) {
-                if (!localStorage.getItem("history") && !localStorage.getItem("scores")) {
+                if (!localStorage.getItem("history")) {
                     const fakeHistory = [
                         {"bottom_left":[0,0], "top_right":[0,0]},
                         {"bottom_left":[0,0], "top_right":[0,0]},
@@ -268,7 +276,6 @@ export function tutorialMode(mode, dataset, type) {
                     ]
                     const fakeScores = [32, 41, 67, 80, 91]
                     localStorage.setItem("fakehistory", JSON.stringify(fakeHistory))
-                    localStorage.setItem("fakescores", JSON.stringify(fakeScores))
                 }
                 historyMode(true);
             }
@@ -282,9 +289,8 @@ export function tutorialMode(mode, dataset, type) {
         .onbeforeexit(function() {
             view.setCenter(currentCenter);
             view.setZoom(currentZoom);
-            if (localStorage.getItem("fakehistory") && localStorage.getItem("fakescores")) {
+            if (localStorage.getItem("fakehistory")) {
                 localStorage.removeItem("fakehistory");
-                localStorage.removeItem("fakescores");
             }
             document.getElementById("game-over").style.display = "none";
         })
@@ -296,42 +302,57 @@ export function tutorialMode(mode, dataset, type) {
     mode = !mode;
 }
 
-export function historyMode(tutorial) {
+export async function historyMode(tutorial) {
+    const unicodes = {
+        "zoom_in": "&#128269;+",
+        "zoom_out": "&#128269;-",
+        "west": "&#11104;",
+        "north": "&#11105;",
+        "east": "&#11106;",
+        "south": "&#11107;",
+        "north_west": "&#8598;",
+        "north_east": "&#8599;",
+        "south_east": "&#8600;",
+        "south_west": "&#8601",
+    }
     let historyData = JSON.parse(localStorage.getItem("history"));
-    let scoreData = JSON.parse(localStorage.getItem("scores"));
 
-    if (tutorial && !localStorage.getItem("history") && !localStorage.getItem("scores")) {
+    if (tutorial && !localStorage.getItem("history")) {
         historyData = JSON.parse(localStorage.getItem("fakehistory"));
         scoreData = JSON.parse(localStorage.getItem("fakescores"));
     }
+    console.log(historyData);
 
-    console.log(historyData, scoreData);
-    const box = document.getElementById("game-over");
-    const messageBox = document.getElementById("message");
-
+    const history = document.getElementById("history");
     if (historyData === null || historyData.length < 0) {
-        messageBox.innerHTML = "No history.";
+        history.innerHTML = `<button disabled="disabled" style="color:#000;width:99%;margin:2px;
+        height:20px;font-weight:900;box-sizing:border-box;border-radius:5px;">No history!</button>`;
     } else {
-        if (tutorial && !localStorage.getItem("history") && !localStorage.getItem("scores")) {
-            messageBox.innerHTML = `<b>Fake tutorial answers</b><br><br>`;
+        if (tutorial && !localStorage.getItem("history")) {
+            history.innerHTML = `<b style="color:#eee;padding:5px;float:left;">Fake tutorial answers</b>`;
         } else {
-            messageBox.innerHTML = `<b>Your previous answers</b><br><br>`;
+            history.innerHTML = `<b style="color:#eee;padding:5px;float:left;">Your history</b>`;
         }
-        messageBox.innerHTML += `<div id="history-modal" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));grid-gap:10px;padding:10px;"></div>`
+        let scoreStyle = "";
         for (let i = 0; i < historyData.length; i++) {
-            const historyModal = document.getElementById("history-modal");
-            const item = document.createElement("div");
-            item.id = i+1;
-            item.style.textAlign = "center";
-
-            const button = document.createElement("button");
-            button.id = (i+1).toString() + "-link";
-            button.className = "gotobutton";
-            button.innerHTML = `Attempt ${i+1} <i class="bi bi-geo-alt-fill"></i>`;
-
-            item.appendChild(button);
-            item.innerHTML += `<br>Score: ${scoreData[i]}`;
-            historyModal.appendChild(item);
+            // const historyModal = document.getElementById("history-modal");
+            let scoreData = historyData[i].score;
+            if (scoreData < 35) {
+                scoreStyle = "#FF0000";
+            } else if (scoreData > 35 && scoreData < 70) {
+                scoreStyle = "#FFDD22";
+            } else {
+                scoreStyle = "#4CBB17";
+            }
+            const history = document.getElementById("history");
+            const item = document.createElement("button");
+            item.id = (i+1).toString() + "-link";
+            item.style.cssText = `display:grid;grid-template-columns:repeat(auto-fit,minmax(10px,1fr));width:99%;
+            height:20px;margin:2px;box-sizing:border-box;border-radius:5px;color:#000;background-color:${scoreStyle}`
+            item.innerHTML = `<span style="text-align:left;padding:2px;"><i class="bi bi-geo-alt-fill"></i> ${i+1}.</span>`;
+            item.innerHTML += `<span style="text-align:center;padding:6px;">${scoreData}</span>`;
+            item.innerHTML += `<span style="text-align:right;padding:6px;">${unicodes[historyData[i].hint]}</span>`
+            history.appendChild(item);
         }
 
         for (let i = 0; i < historyData.length; i++) {
@@ -341,9 +362,171 @@ export function historyMode(tutorial) {
             button.onclick = function() {
                 const resolution = view.getResolutionForExtent(extent, osmMap.getSize());
                 view.animate({ center: olExtent.getCenter(extent), duration: 3000, zoom: view.getZoomForResolution(resolution) });
-                box.style.display = "none";
             };
         }
     }
-    box.style.display = "block";
+}
+
+export async function animateScore(score) {
+    document.getElementById("hint").style.display = "none";
+    const counter = document.getElementById("counter");
+    counter.style.display = "block";
+
+    const speed = 10;
+    let currentValue = 0;
+    let scoreStyle = "";
+
+    if (score < 35) {
+        scoreStyle = "#FF0000";
+    } else if (score > 35 && score < 70) {
+        scoreStyle = "#FFDD22";
+    } else {
+        scoreStyle = "#4CBB17";
+    }
+
+    const animate = () => {
+        counter.innerHTML = `<span style="color:${scoreStyle};">${currentValue}</span>`;
+
+        if (currentValue < score) {
+            currentValue += 1;
+            setTimeout(animate, speed);
+        }
+    }
+    animate();
+}
+
+export async function animateHint(gameStats, count) {
+    document.getElementById("counter").style.display = "none";
+    const hintSpan = document.getElementById("hint");
+    hintSpan.style.display = "block";
+
+    const overlap = gameStats.overlap;
+    const hint = gameStats.hint;
+    const icons = {
+        "zoom_in": "bi-zoom-in",
+        "zoom_out": "bi-zoom-out",
+        "east": "bi-arrow-right",
+        "west": "bi-arrow-left",
+        "north": "bi-arrow-up",
+        "south": "bi-arrow-down",
+        "south_east": "bi-arrow-down-right",
+        "south_west": "bi-arrow-down-left",
+        "north_east": "bi-arrow-up-right",
+        "north_west": "bi-arrow-up-left"
+    }
+    const animations = {
+        "zoom_in": [
+            { textAlign: "center", transform: "scale(1, 1)" },
+            { textAlign: "center", transform: "scale(0.75, 0.75)" },
+            { textAlign: "center", transform: "scale(0.5, 0.5)" }
+        ],
+        "zoom_out": [
+            { textAlign: "center", transform: "scale(0.5, 0.5)" },
+            { textAlign: "center", transform: "scale(0.75, 0.75)" },
+            { textAlign: "center", transform: "scale(1, 1)" }
+        ],
+        "east": [
+            { left: "20%" },
+            { left: "50%"}
+        ],
+        "west": [
+            { left: "50%" },
+            { left: "20%"}
+        ],
+        "north": [
+            {
+                verticalAlign: "bottom",
+                textAlign: "center",
+                transform: "translateY(75%)"
+            },
+            {
+                verticalAlign: "bottom",
+                textAlign: "center",
+                transform: "translateY(-75%)"
+            }
+        ],
+        "south": [
+            {
+                verticalAlign: "top",
+                textAlign: "center",
+                transform: "translateY(-75%)"
+            },
+            {
+                verticalAlign: "top",
+                textAlign: "center",
+                transform: "translateY(75%)"
+            }
+        ],
+        "south_east": [
+            {
+                margin: "0",
+                left: "15%",
+                top: "15%",
+            },
+            {
+                margin: "0",
+                left: "55%",
+                top: "55%",
+            }
+        ],
+        "south_west": [
+            {
+                textAlign: "right",
+                margin: "0",
+                right: "15%",
+                top: "15%",
+            },
+            {
+                textAlign: "right",
+                margin: "0",
+                right: "55%",
+                top: "55%",
+            }
+        ],
+        "north_east": [
+            {
+                margin: "0",
+                left: "15%",
+                bottom: "15%",
+            },
+            {
+                margin: "0",
+                left: "55%",
+                bottom: "55%",
+            }
+        ],
+        "north_west": [
+            {
+                margin: "0",
+                left: "15%",
+                bottom: "15%",
+            },
+            {
+                margin: "0",
+                left: "55%",
+                bottom: "55%",
+            }
+        ]
+    }
+    const timings = {
+        duration: 2500,
+        iterations: 2,
+    }
+    let hintLabel = "";
+    if (hint) {
+        const newHintString = hint.split("_").join(" ")
+        hintLabel = newHintString.charAt(0).toUpperCase() + newHintString.slice(1);
+    }
+
+    if (count > 0 && count < 6) {
+        if (overlap) {
+            hintSpan.innerHTML = `<i class="bi ${icons[hint]}"></i>`
+            hintSpan.animate(animations[hint], timings);
+        } else {
+            hintSpan.innerHTML = `<i class="bi ${icons[hint]}"></i><i class="bi ${icons[hint]}"></i>`
+            hintSpan.animate(animations[hint], timings);
+        }
+    } else {
+        displayGameOver(messageBox, false, false); // lost
+    }
 }

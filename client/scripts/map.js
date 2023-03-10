@@ -23,19 +23,11 @@ class CustomControls extends Control {
         tutorialQuiz.id = "tutorial-quiz";
         tutorialQuiz.innerHTML = '<i class="bi bi-question-diamond"></i>';
 
-        const history = document.createElement("span");
-        history.id = "history";
-        history.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
-
-        const title = document.createElement("div");
-
         const titleText = document.createElement("p");
         titleText.id = "title";
         titleText.appendChild(tutorialQuiz);
         titleText.innerHTML += "Question of the day";
-        titleText.appendChild(history);
-
-        title.appendChild(titleText);
+        quiz.appendChild(titleText);
 
         const question = document.createElement("p");
         question.id = "question";
@@ -45,21 +37,24 @@ class CustomControls extends Control {
         questionA.innerText = "[start here]";
 
         question.appendChild(questionA);
-        quiz.append(title, document.createElement("hr"), question);
+        quiz.append(document.createElement("hr"), question);
+
+        const history = document.createElement("div");
+        history.id = "history";
+
+        const submit = document.createElement("input");
+        submit.type = "submit";
+        submit.value = "submit answer";
+        submit.id = "submit";
 
         const search = document.createElement("input");
         search.type = "text";
         search.placeholder = "Go to location";
         search.id = "search";
-    
-        const submit = document.createElement("input");
-        submit.type = "submit";
-        submit.value = "submit answer";
-        submit.id = "submit";
   
         const element = document.createElement("div");
         element.className = "custom-controls ol-unselectable ol-control";
-        element.append(quiz, submit, search);
+        element.append(quiz, submit, history, search);
   
         super({
             element: element,
@@ -94,6 +89,20 @@ const map = new Map({
     overlays: tooltipOverlay,
     view: view
 });
+
+const mapViewport = document.querySelector(".ol-overlaycontainer-stopevent");
+
+const blurback = document.createElement("div");
+blurback.id = "blur-back";
+
+const counter = document.createElement("span");
+counter.id = "counter";
+counter.innerHTML = "0";
+
+const hint = document.createElement("span");
+hint.id = "hint";
+
+mapViewport.append(blurback, counter, hint);
 
 // create the google maps search box
 window.initAutocomplete = function initAutocomplete() {

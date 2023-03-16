@@ -3,6 +3,7 @@
 # client
 
 ## install dependencies and run locally
+Move to the subdirectory `client/` and run the following commands.
 
 ```console
 npm install

@@ -2,11 +2,7 @@
 
 import json
 import utils
-from bson import ObjectId
 from pymongo import MongoClient
-
-# temporary - populate db with some data
-# utils.populate_db()
 
 # getting a random question from db
 def get_question():
@@ -23,9 +19,7 @@ data = {}
 game = get_question()
 data["game"] = {}
 for field in game:
-    if field != '_id':
-        data["game"][field] = game[field]
-data["gmap_api_url"] = utils.get_gmaps_script_url()
+    data["game"][field] = game[field]
 
 # send data
 print("Content-Type: application/json")

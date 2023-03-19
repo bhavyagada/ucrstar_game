@@ -1,15 +1,9 @@
 import os
 import json
 import logging
-from bson import ObjectId, json_util
-from pymongo import MongoClient
-from datetime import date, timedelta
-from dotenv import load_dotenv
-load_dotenv()
+from bson import json_util
 
-MONGODB_URL = os.getenv('MONGODB_URL')
-GMAPS_API_KEY = os.getenv('GMAPS_API_KEY')
-TODAY = date.today()
+MONGODB_URL = "mongodb://localhost/"
 
 # for debugging
 log_file = os.path.join(os.getcwd(), "server.log")
@@ -52,46 +46,7 @@ logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s %
 #     "question_link": "https://star.cs.ucr.edu/?NE/countries#center=26.3,24.8&zoom=3"
 # }]
 
-def populate_db():
-    data = {}
-    try:
-        with open("cgi-bin/data.json", "r") as data_file:
-            data = json.load(data_file)
-    except Exception as e:
-        logging.info(f'error in reading data file : {e}')
-
-    con = MongoClient(MONGODB_URL)
-    db = con.ucrstar
-    result = db.game.aggregate([{ "$group": {
-            "_id": None,
-            "earliestDate": { 
-                "$min": { 
-                    "$toDate": "$date" 
-                }
-            }
-        }
-    }])
-    
-    doc_count = db.game.count()
-    if doc_count == 0:
-        count = 0
-    else:
-        earliest_date = list(result)[0]['earliestDate'].date()
-        count = doc_count - (TODAY - earliest_date).days
-    # logging.info(f'earliest date : {earliest_date}')
-    # logging.info(f'count of documents : {count}')
-
-    for i, doc in enumerate(data):
-        doc["date"] = str(TODAY + timedelta(days=i+count))
-    # logging.info(f'updated data : {data}')
-
-    db.game.insert_many(data)
-    con.close()
-
 def cursor_to_json(cursor):
     documents = [document for document in cursor]
     json_dump = json.dumps(documents, default=json_util.default)
     return json.loads(json_dump)
-
-def get_gmaps_script_url():
-    return "https://maps.googleapis.com/maps/api/js?key=" + GMAPS_API_KEY + "&callback=initAutocomplete&libraries=places&v=weekly"

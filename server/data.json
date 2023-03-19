@@ -1,4 +1,5 @@
 [{
+    "_id": 1,
     "question": "Can you spot Camp Nou using sports dataset on UCR-Star? Here is a starting point for you on UCR-Star []",
     "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
     "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
@@ -8,9 +9,11 @@
     },
     "dataset":"OSM2015/sports",
     "dataset_type": "large",
-    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13"
+    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
+    "date": "2023-03-18"
 }, {
-   "question": "Can you spot China []",
+    "_id": 2,
+    "question": "Can you spot China []",
     "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
     "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
     "answer_stats": {
@@ -19,8 +22,10 @@
     },
     "dataset":"OSM2015/lakes",
     "dataset_type": "large",
-    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13"
+    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
+    "date": "2023-03-19"
 },{
+    "_id": 3,
     "question": "Can you spot California []",
     "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
     "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
@@ -30,9 +35,11 @@
     },
     "dataset":"Riverside/Subdivision",
     "dataset_type": "small",
-    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13"
+    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
+    "date": "2023-03-20"
 }, {
-   "question": "Can you spot New Zealand []",
+    "_id": 4,
+    "question": "Can you spot New Zealand []",
     "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
     "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
     "answer_stats": {
@@ -41,9 +48,11 @@
     },
     "dataset":"OSM2015/buildings",
     "dataset_type": "large",
-    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13"
+    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
+    "date": "2023-03-21"
 }, {
-   "question": "Can you spot India []",
+    "_id": 5,
+    "question": "Can you spot India []",
     "answer": "Here you can find Camp Nou and 5 million other sports related polygons on UCR-Star []",
     "answer_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.380925,2.122928&zoom=18",
     "answer_stats": {
@@ -52,5 +61,6 @@
     },
     "dataset":"OSM2015/all_nodes",
     "dataset_type": "large",
-    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13"
+    "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
+    "date": "2023-03-22"
 }]

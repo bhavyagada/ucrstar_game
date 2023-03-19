@@ -121,27 +121,24 @@ def get_stats(user_answer, answer):
                 result["index"] = jaccard_index
                 result["hint"] = "zoom_in"
                 result["score"] = score
-                result["message"] = "to get a better score, try again!"
                 return result
             if jaccard_index < jaccard_index_threshold:
                 result["index"] = jaccard_index
                 result["score"] = 0
                 result["hint"] = "zoom_in"
-                result["message"] = "try again!"
                 return result
             if jaccard_index > max_index:
                 result["index"] = jaccard_index
                 result["score"] = 100
-                result["message"] = "congratulations! you got a perfect score!"
+                result["hint"] = "win"
                 return result
         elif zoom and direction == "out":
             if jaccard_index <= max_index:
                 score = calculate_score(jaccard_index, 0.0, max_index, 50.0, 100.0)
-                result["message"] = "you're very close, try again!"
                 result["hint"] = "zoom_out"
             else:
                 score = 100
-                result["message"] = "congratulations! you got a perfect score!"
+                result["hint"] = "win"
             result["index"] = jaccard_index
             result["score"] = score
             return result
@@ -149,10 +146,9 @@ def get_stats(user_answer, answer):
             if jaccard_index <= max_index:
                 score = calculate_score(jaccard_index, 0.0, max_index, 50.0, 100.0)
                 result["hint"] = directions[round(angle / 45)]
-                result["message"] = "you're very close, try again!"
             else:
                 score = 100
-                result["message"] = "congratulations! you got a perfect score!"
+                result["hint"] = "win"
             result["index"] = jaccard_index
             result["score"] = score
             return result
@@ -168,7 +164,6 @@ def get_stats(user_answer, answer):
             score = 0
         result["distance"] = distance
         result["score"] = score
-        result["message"] = "try again!"
         result["hint"] = directions[round(angle / 45)]
         return result
 

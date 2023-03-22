@@ -34,7 +34,7 @@ npm install
 npm start
 ```
 ### env files
-Create ```.env.development``` and ```.env.production``` to store environment specific variables to be used in the application.
+In the ```client/``` subdirectory, create ```.env.development``` and ```.env.production``` to store environment specific variables to be used in the application.
 For now, it only contains the following keys: <br>
 VITE_API_URL="http://localhost:8000" (for development) and <br>
 VITE_GMAPS_API="API_KEY" (for google maps search) <br>

@@ -1,6 +1,6 @@
 import { Feature, Map, View, Overlay } from 'ol';
 import TileLayer from 'ol/layer/Tile';
-import {OSM} from 'ol/source';
+import { OSM } from 'ol/source';
 import { Control, defaults as defaultControls } from 'ol/control';
 import { transform, transformExtent, getTransform } from 'ol/proj';
 import * as olExtent from 'ol/extent';
@@ -11,7 +11,7 @@ import { Style, Stroke, Fill } from 'ol/style';
 import XYZ from 'ol/source/XYZ';
 import GeoJSON from 'ol/format/GeoJSON';
 
-// create custom search and submit controls
+// create custom history and search controls
 class CustomControls extends Control {
     constructor(opt_options) {
         const options = opt_options || {};
@@ -26,7 +26,6 @@ class CustomControls extends Control {
         const titleText = document.createElement("p");
         titleText.id = "title";
         titleText.appendChild(tutorialQuiz);
-        titleText.innerHTML += "Question of the day";
         quiz.appendChild(titleText);
 
         const question = document.createElement("p");
@@ -42,11 +41,6 @@ class CustomControls extends Control {
         const history = document.createElement("div");
         history.id = "history";
 
-        const submit = document.createElement("input");
-        submit.type = "submit";
-        submit.value = "submit answer";
-        submit.id = "submit";
-
         const search = document.createElement("input");
         search.type = "text";
         search.placeholder = "Go to location";
@@ -54,8 +48,30 @@ class CustomControls extends Control {
   
         const element = document.createElement("div");
         element.className = "custom-controls ol-unselectable ol-control";
-        element.append(quiz, submit, history, search);
+        element.append(quiz, history, search);
   
+        super({
+            element: element,
+            target: options.target,
+        });
+    }
+}
+
+// submit answer button
+class CustomSubmit extends Control {
+    constructor(opt_options) {
+        const options = opt_options || {};
+
+        const submit = document.createElement("input");
+        submit.type = "submit";
+        submit.value = "submit answer";
+        submit.id = "submit";
+        submit.name = "mainsubmit"
+
+        const element = document.createElement("div");
+        element.className = "custom-submit ol-unselectable ol-control";
+        element.append(submit);
+
         super({
             element: element,
             target: options.target,
@@ -83,7 +99,7 @@ const tooltipOverlay = [new Overlay({
 
 // map
 const map = new Map({
-    controls: defaultControls().extend([new CustomControls()]),
+    controls: defaultControls().extend([new CustomControls(), new CustomSubmit()]),
     target: 'map',
     layers: layers,
     overlays: tooltipOverlay,
@@ -95,10 +111,12 @@ const mapViewport = document.querySelector(".ol-overlaycontainer-stopevent");
 const blurback = document.createElement("div");
 blurback.id = "blur-back";
 
+// to show the score
 const counter = document.createElement("span");
 counter.id = "counter";
 counter.innerHTML = "0";
 
+// to show hints
 const hint = document.createElement("span");
 hint.id = "hint";
 
@@ -139,7 +157,8 @@ export function displayAnswerBox(extent) {
     }))
 }
 
-export function getScore() {
+// send extent coordinates to get scores
+export function getAnswerExtent() {
     const currentAnswer = transformExtent(map.getView().calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326');
 
     return {
@@ -168,20 +187,88 @@ function writeValueToHTML(attributeValue) {
         html += "}"
     }
     return html;
-  }
+}
 
-function displayXYZData(data, position) {
+export function addQuestion() {
+    let formData = {}
+    const tooltip = document.getElementById("tooltip");
+    const attributes = tooltip.querySelectorAll(".attribute");
+
+    const id = tooltip.querySelector("#id").value;
+    const q = tooltip.querySelector("#q").value;
+    const qlink = tooltip.querySelector("#qlink").value;
+    const a = tooltip.querySelector("#a").value;
+    const alink = tooltip.querySelector("#alink").value;
+    const bl_x = tooltip.querySelector("#bl_x").value;
+    const bl_y = tooltip.querySelector("#bl_y").value;
+    const tr_x = tooltip.querySelector("#tr_x").value;
+    const tr_y = tooltip.querySelector("#tr_y").value;
+    const d = tooltip.querySelector("#d").value;
+    const dtype = tooltip.querySelector("#dtype").value;
+    const date = tooltip.querySelector("#date").value;
+
+    if (id && q && qlink && a && alink && bl_x && bl_y && tr_x && tr_y && d && dtype && date) {
+        formData = {
+            "_id": id, 
+            "question": q, 
+            "question_link": qlink, 
+            "answer": a, 
+            "answer_link": alink,
+            "answer_stats": {
+                "bottom_left": [bl_x, bl_y],
+                "top_right": [tr_x, tr_y]
+            },
+            "dataset": d, 
+            "dataset_type": dtype, 
+            "date": date
+        };
+        for (let i = 0; i < attributes.length; i++) {
+            if (attributes[i].checked) {
+                formData[attributes[i].name] = attributes[i].value;
+            }
+        }
+        const newWindow = window.open();
+        newWindow.document.write(`<h2>Copy this text into <b>server/data.json</b> file</h2><pre>${JSON.stringify(formData, null, 4)}</pre>`);
+    }
+}
+
+function displayXYZData(data, position, dataset) {
     const tooltip = document.getElementById("tooltip");
     tooltip.style.display = data ? '' : 'none';
     if (data) {
         tooltipOverlay[0].setPosition(position);
         const attributeNames = Object.keys(data);
         let html = "";
-        for (let i = 0; i < attributeNames.length; i++) {
-            const attributeName = attributeNames[i];
-            html += attributeName + ": ";
-            html += writeValueToHTML(data[attributeName]);
-            html += "<br/>"
+        if (document.body.classList.contains('admin')) {
+            for (let i = 0; i < attributeNames.length; i++) {
+                const attributeName = attributeNames[i];
+                const attributeValue = writeValueToHTML(data[attributeName]);
+                html += `<input type="checkbox" class="attribute" name="${attributeName}" value=${attributeValue}>`;
+                html += attributeName + ": ";
+                html += attributeValue;
+                html += "<br/>"
+            }
+            html += `_id : <input id="id" type="number" name="id"><br>`;
+            html += `question : <input id="q" type="text" name="q"><br>`;
+            html += `question_link : <input id="qlink" type="url" name="qlink"><br>`;
+            html += `answer : <input id="a" type="text" name="a"><br>`;
+            html += `answer_link : <input id="alink" type="url" name="alink"><br>`;
+            html += `answer bottom_left x : <input id="bl_x" type="number" name="bl_x"><br>`;
+            html += `answer bottom_left y : <input id="bl_y" type="number" name="bl_y"><br>`
+            html += `answer top_right x : <input id="tr_x" type="number" name="tr_x"><br>`;
+            html += `answer top_right y : <input id="tr_y" type="number" name="tr_y"><br>`
+            html += `dataset : <input id="d" type="text" name="d" value="${dataset}"><br>`;
+            html += `dataset_type : <input id="dtype" type="text" name="dtype" value="large"><br>`;
+            html += `date : <input id="date" type="date" name="date"><br>`;
+            html += `<input id="addq" type="submit" value="add question"><br>`;
+        } else {
+            for (let i = 0; i < attributeNames.length; i++) {
+                const attributeName = attributeNames[i];
+                html += attributeName + ": ";
+                html += writeValueToHTML(data[attributeName]);
+                html += "<br/>"
+            }
+            html += `<input id="submit" type="submit" value="submit answer" name=${writeValueToHTML(data["attr#0"])}>`;
         }
         tooltip.innerHTML = html;
     }
@@ -198,18 +285,44 @@ function displayGeoJSONData(event) {
         tooltipOverlay[0].setPosition(event.coordinate);
         const attributeNames = feature.getKeys();
         let html = "";
-        for (let i = 0; i < attributeNames.length; i++) {
-            const attributeName = attributeNames[i];
-            if (attributeName != feature.getGeometryName()) {
-                const attributeValue = feature.get(attributeName)
-                html += attributeName + ": " + attributeValue + "<br/>"
+        if (document.body.classList.contains('admin')) {
+            for (let i = 0; i < attributeNames.length; i++) {
+                const attributeName = attributeNames[i];
+                if (attributeName != feature.getGeometryName()) {
+                    const attributeValue = feature.get(attributeName)
+                    html += `<input type="checkbox" class="attribute" name="${attributeName}" value=${attributeValue}>`;
+                    html += attributeName + ": " + attributeValue + "<br/>"
+                }
             }
+            html += `_id : <input id="id" type="number" name="id"><br>`;
+            html += `question : <input id="q" type="text" name="q"><br>`;
+            html += `question_link : <input id="qlink" type="url" name="qlink"><br>`;
+            html += `answer : <input id="a" type="text" name="a"><br>`;
+            html += `answer_link : <input id="alink" type="url" name="alink"><br>`;
+            html += `answer bottom_left x : <input id="bl_x" type="number" name="bl_x"><br>`;
+            html += `answer bottom_left y : <input id="bl_y" type="number" name="bl_y"><br>`
+            html += `answer top_right x : <input id="tr_x" type="number" name="tr_x"><br>`;
+            html += `answer top_right y : <input id="tr_y" type="number" name="tr_y"><br>`
+            html += `dataset : <input id="d" type="text" name="d"><br>`;
+            html += `dataset_type : <input id="dtype" type="text" name="dtype" value="small"><br>`;
+            html += `date : <input id="date" type="date" name="date"><br>`;
+            html += `<input id="addq" type="submit" value="add question"><br>`;
+        } else {
+            for (let i = 0; i < attributeNames.length; i++) {
+                const attributeName = attributeNames[i];
+                if (attributeName != feature.getGeometryName()) {
+                    const attributeValue = feature.get(attributeName)
+                    html += attributeName + ": " + attributeValue + "<br/>"
+                }
+            }
+            html += `<input id="submit" type="submit" value="submit answer" name=${attributeNames["OBJECTID"]}>`;
         }
         tooltip.innerHTML = html;
     }
 };
 
 export function displayDataset(dataset, type) {
+    console.log(dataset, type);
     // https://gis.stackexchange.com/questions/302532/how-to-update-tile-source-url-at-zoom-change
     if (type == "large") {
         map.addLayer(new TileLayer({
@@ -234,7 +347,7 @@ export function displayDataset(dataset, type) {
                 const response = await fetch(url);
                 const data = await response.json();
                 if(!data.out_bound) {
-                    displayXYZData(data, opx);
+                    displayXYZData(data, opx, dataset);
                 } else {
                     tooltip.style.display = 'none';
                 }
@@ -262,10 +375,6 @@ export function displayDataset(dataset, type) {
         map.getLayers().item(0).setOpacity(0.5);
         map.on('click', displayGeoJSONData);
     }
-}
-
-export function removeDataset() {
-    map.removeLayer(map.getLayers().item(2));
 }
 
 export {map as osmMap, view, transform, getTransform, olExtent, transformExtent}

@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 
+import os
 import math
-import cgi, cgitb
-import json
 import utils
+import cgi
+import json
+import logging
 from pymongo import MongoClient
 
-cgitb.enable()
+# for debugging
+log_file = os.path.join(os.getcwd(), "server.log")
+logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+
 current = cgi.FieldStorage()
 bottom_left = current.getvalue('bottom_left')
 top_right = current.getvalue('top_right')
+other = current.getvalue('other')
 
 user_answer = {
     "bottom_left": [float(i) for i in bottom_left.split(',')],
     "top_right": [float(i) for i in top_right.split(',')],
+    "other": other
 }
 
 def to_radians(angle):
@@ -68,6 +75,11 @@ def zooms(x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6):
 def get_stats(user_answer, answer):
     result = {}
 
+    if user_answer["other"] == answer["other"]:
+        result["score"] = 100
+        result["hint"] = "win"
+        return result
+
     # https://www.analytics-link.com/post/2018/08/21/calculating-the-compass-direction-between-two-points-in-python
     directions = ["west", "south_west", "south", "south_east", "east", "north_east", "north", "north_west", "west"]
 
@@ -75,10 +87,10 @@ def get_stats(user_answer, answer):
     y1 = user_answer["bottom_left"][1]
     x2 = user_answer["top_right"][0]
     y2 = user_answer["top_right"][1]
-    x3 = answer["bottom_left"][0]
-    y3 = answer["bottom_left"][1]
-    x4 = answer["top_right"][0]
-    y4 = answer["top_right"][1]
+    x3 = answer["main"]["bottom_left"][0]
+    y3 = answer["main"]["bottom_left"][1]
+    x4 = answer["main"]["top_right"][0]
+    y4 = answer["main"]["top_right"][1]
 
     user_center, user_area = get_other_box_details(x1, y1, x2, y2)
     ans_center, ans_area = get_other_box_details(x3, y3, x4, y4)
@@ -171,7 +183,7 @@ def check_answer(user_answer):
     con = MongoClient(utils.MONGODB_URL)
     db = con.ucrstar
     quiz = db.game.find_one({"date": str(utils.TODAY)})
-    answer = quiz["answer_stats"]
+    answer = {"main": quiz["answer_stats"], "other": quiz["alternate_answer"]}
     con.close()
     return get_stats(user_answer, answer)
 

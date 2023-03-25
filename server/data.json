@@ -7,10 +7,11 @@
         "bottom_left": [ 2.120406723526001, 41.37934110772656 ],
         "top_right": [ 2.125449276473999, 41.38250885369828 ]
     },
+    "attr0": "34607291",
     "dataset":"OSM2015/sports",
     "dataset_type": "large",
     "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
-    "date": "2023-03-18"
+    "date": "2023-03-24"
 }, {
     "_id": 2,
     "question": "Can you spot China []",
@@ -23,7 +24,7 @@
     "dataset":"OSM2015/lakes",
     "dataset_type": "large",
     "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
-    "date": "2023-03-19"
+    "date": "2023-03-25"
 },{
     "_id": 3,
     "question": "Can you spot California []",
@@ -36,7 +37,7 @@
     "dataset":"Riverside/Subdivision",
     "dataset_type": "small",
     "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
-    "date": "2023-03-20"
+    "date": "2023-03-26"
 }, {
     "_id": 4,
     "question": "Can you spot New Zealand []",
@@ -49,7 +50,7 @@
     "dataset":"OSM2015/buildings",
     "dataset_type": "large",
     "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
-    "date": "2023-03-21"
+    "date": "2023-03-27"
 }, {
     "_id": 5,
     "question": "Can you spot India []",
@@ -62,5 +63,5 @@
     "dataset":"OSM2015/all_nodes",
     "dataset_type": "large",
     "question_link": "https://star.cs.ucr.edu/?osm21/sports#center=41.3957,2.1813&zoom=13",
-    "date": "2023-03-22"
+    "date": "2023-03-28"
 }]

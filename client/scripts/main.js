@@ -2,100 +2,76 @@ import * as map from './map';
 import * as helpers from './helpers';
 
 // fetch question
-let gameData = "";
-(async() => {
-	console.log(import.meta.env.VITE_BASE_URL)
-	const response = await fetch(`${import.meta.env.VITE_BASE_URL}/cgi-bin/app.cgi`);
-	const responseData = await response.json();
-	console.log(responseData);
-
-	// save game data
-	if (!localStorage.getItem("game")) {
-		gameData = responseData.game
-		localStorage.setItem("game", JSON.stringify(gameData));
-	} else {
-		gameData = JSON.parse(localStorage.getItem("game"));
-	}
-	// save attempt count
-	if (!localStorage.getItem("attemptCount")) {
-		localStorage.setItem("attemptCount", 1); // game hasn't started
-	}
-
-	// get the google maps api url and add it in html
-	const gmaps_script = document.getElementById("gmaps");
-	gmaps_script.src = responseData.gmap_api_url
-
-	const question = gameData.question;
-	const questionLink = gameData.question_link;
-	helpers.displayQuestion(question, questionLink);
-
-	const dataset = gameData.dataset;
-	const dataset_type = gameData.dataset_type;
-	console.log(dataset, dataset_type);
-
-	// has to be deleted later
-	// const box = gameData.answer_stats;
-	// map.displayAnswerBox(box.bottom_left.concat(box.top_right));
-
-	// start position with dataset
-	helpers.displayMap(questionLink)
-	map.displayDataset(dataset, dataset_type);
-	const openTutorial = document.getElementById("tutorial-quiz");
-	openTutorial.onclick = function() { 
-		return helpers.tutorialMode(true, dataset, dataset_type);
-	}
-})();
-
-// submit answer (#TODO also send attempt number for corresponding hint number) to receive hint if answer is wrong
-const submit = document.getElementById("submit");
-submit.onclick = function submitAnswer() {
-	const count = parseInt(localStorage.getItem("attemptCount"));
-	const scoreData = map.getScore();
-
-	let data = new URLSearchParams()
-	for (let key in scoreData) {
-		data.append(key, scoreData[key]);
-	}
-	console.log(data);
-
+if (document.body.classList.contains('main')) {
 	(async() => {
-		const response = await fetch(`${import.meta.env.VITE_BASE_URL}/cgi-bin/answer.cgi`, {
-			method: 'POST',
-			body: data // send answer attempt to server for check
-		});
-
+		console.log(import.meta.env.VITE_BASE_URL)
+		const response = await fetch(`${import.meta.env.VITE_BASE_URL}/cgi-bin/app.cgi`);
 		const responseData = await response.json();
-		console.log(responseData.response);
+		console.log(responseData);
 
-		// save attempt history
-		scoreData["hint"] = responseData.response.hint;
-		scoreData["score"] = responseData.response.score;
-		if (!localStorage.getItem("history")) {
-			localStorage.setItem("history", JSON.stringify([scoreData]));
-		} else if (localStorage.getItem("history") && count > 0 && count < 6){
-			let historyData = JSON.parse(localStorage.getItem("history"));
-			console.log(historyData);
-			historyData.push(scoreData);
-			localStorage.setItem("history", JSON.stringify(historyData));
+		// save game data
+		let gameData = "";
+		const localGameData = localStorage.getItem("game");
+		if (!localGameData) {
+			gameData = responseData.game
+			localStorage.setItem("game", JSON.stringify(gameData));
+		} else {
+			gameData = JSON.parse(localGameData);
+		}
+		// save attempt count
+		if (!localStorage.getItem("attemptCount")) {
+			localStorage.setItem("attemptCount", 1); // game hasn't started
 		}
 
-		async function myFunction() {
-			document.getElementById("blur-back").style.display = "block";
-			await helpers.animateScore(responseData.response.score);
-			await new Promise(resolve => setTimeout(resolve, 2500));
-			document.getElementById("counter").style.display = "none";
-			await helpers.animateHint(responseData.response, count);
-			await new Promise(resolve => setTimeout(resolve, 5000));
-			document.getElementById("hint").style.display = "none";
-			document.getElementById("blur-back").style.display = "none";
-			await helpers.historyMode(false);
+		// get the google maps api url and add it in html
+		const gmaps_script = document.getElementById("gmaps");
+		gmaps_script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GMAPS_API}&callback=initAutocomplete&libraries=places&v=weekly`;
+
+		helpers.displayQuestion(gameData.question, gameData.question_link);
+		document.getElementById("title").innerHTML += `Question ${gameData._id}`;
+		
+		// has to be deleted later
+		// map.displayAnswerBox(gameData.answer_stats.bottom_left.concat(gameData.answer_stats.top_right));
+
+		// start position with dataset
+		helpers.displayMap(gameData.question_link)
+		map.displayDataset(gameData.dataset, gameData.dataset_type);
+		const openTutorial = document.getElementById("tutorial-quiz");
+		openTutorial.onclick = function() { 
+			return helpers.tutorialMode(true, gameData.dataset, gameData.dataset_type);
 		}
-		myFunction();
-		// helpers.displayHint(responseData.response, count, false);
 	})();
+} else {
+	var params = {};
+	location.search.slice(1).split("&").forEach(function(pair) {
+		pair = pair.split("=");
+		params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+	});
+	map.displayDataset(params.dataset, params.dataset_type);
+	console.log(params);
 
-	// count number of attemps and stop after 5 attempts
-	helpers.attemptCount();
+	const gmaps_script = document.getElementById("gmaps");
+	gmaps_script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GMAPS_API}&callback=initAutocomplete&libraries=places&v=weekly`;
+}
+
+// submit answer
+const submit = document.getElementById("submit");
+submit.onclick = function () {return helpers.submitAnswer();}
+
+// alternate submit answer
+const tooltip = document.getElementById("tooltip");
+if (document.body.classList.contains('admin')) {
+	tooltip.onclick = function () { return map.addQuestion(); }
+} else {
+	tooltip.onclick = function () { return helpers.submitAnswer(); }
+}
+
+// stop score & hint animation when clicked on background
+document.onclick = function () {
+	document.getElementById("counter").style.display = "none";
+	document.getElementById("hint").style.display = "none";
+	document.getElementById("blur-back").style.display = "none";
+	helpers.historyMode(false);
 }
 
 // to open or close modal
@@ -105,6 +81,13 @@ closegameover.onclick = function() {
 	gameover.style.display = gameover.style.display === "block" ? "none" : "block";
 }
 
+// show history when window loads
 window.onload = () => {
 	return helpers.historyMode(false);
 }
+
+// reload screen to show history if window is resized
+window.addEventListener('resize',() => {
+	location.reload();
+	return helpers.historyMode(false);
+})

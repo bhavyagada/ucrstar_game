@@ -79,4 +79,4 @@ The URL in the client .env files might need to be changed accordingly.
 - Provide some details about the question.
 - Click on the generated JSON object to copy it.
 - Paste the copied text into the ```data.json``` file.
-- Now, [import sample questions](sample-questions)
+- Now, [import sample questions](https://github.com/bhavyagada/ucrstar_game#import-sample-questions-datajson-into-mongodb)

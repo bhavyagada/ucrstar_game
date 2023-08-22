@@ -16,9 +16,9 @@ and mongoDB
 brew tap mongodb/brew
 brew install mongodb-community
 ```
-
+<a name="sample-questions"></a>
 ## import sample questions (data.json) into mongoDB
-Navigate to the subdirectory ```server/``` and run
+Run the following command
 ```console
 mongoimport -d ucrstar -c game --file data.json --jsonArray --drop
 ```
@@ -71,3 +71,12 @@ then open [http://localhost:3000/](http://localhost:3000/) to see how the applic
 Move to the subdirectory ```server/```,<br>
 The files inside the ```cgi-bin``` directory can be copied to the ```cgi-bin``` directory on the web server.<br>
 The URL in the client .env files might need to be changed accordingly.
+
+# to add questions
+- Open the ```question.html``` file directly in your web browser.
+- Select a dataset from the dropdown menu.
+- Click on any data point on the map, which will serve as the answer to a quiz question.
+- Provide some details about the question.
+- Click on the generated JSON object to copy it.
+- Paste the copied text into the ```data.json``` file.
+- Now, [import sample questions](sample-questions)

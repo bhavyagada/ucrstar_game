@@ -3,17 +3,289 @@
     <head>
         <meta charset="UTF-8" />
         <link rel="icon" type="image/x-icon" href="https://openlayers.org/favicon.ico" />
+        <link rel="stylesheet" href="../style.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" />
-        <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css" />
-        <link rel="stylesheet" href="../style.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
+        <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>UCR Star Quiz</title>
     </head>
-    <body class="admin">
-        <main id="map"></main>
+    <body>
+        <label><b>Select a dataset:</b></label>
+        <select id="datasets" onchange="handleDatasetChange()"></select>
+        <main id="map" style="width: 100%; height: 95%; position: absolute; bottom: 0; left: 0;"></main>
         <div id="tooltip"></div>
-        <script type="module" src="../scripts/main.js"></script>
         <script id="gmaps" defer></script>
-        <script type="text/javascript" src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+        <script>
+            // map tooltip for information
+            const tooltipOverlay = [new ol.Overlay({
+                element: document.getElementById('tooltip'),
+                offset: [10, 0],
+                positioning: 'bottom-left'
+            })];
+            
+            // display the map
+            const map = new ol.Map({
+                target: 'map',
+                layers: [new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                })],
+                overlays: tooltipOverlay,
+                view: new ol.View({
+                    center: [0, 0],
+                    zoom: 2
+                }),
+            });
+
+            // HTTP GET function
+            const getJSON = function(url, callback) {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.responseType = 'json';
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.onload = function() {
+                    const status = xhr.status;
+                    if (status === 200) callback(null, xhr.response);
+                    else callback(status, xhr.response);   
+                };
+                xhr.send();
+            }
+            
+            // display the results in dropdown
+            let dropdown = '';
+            getJSON("https://star.cs.ucr.edu/datasets", function(err, data) {
+                if (err !== null) console.log('Something went wrong: ', err);
+                else {
+                    const datasets = data.datasets;
+                    for (let i = 0; i < datasets.length; i++) {
+                        dropdown += '<option value="'+ datasets[i]._id + '">' + datasets[i].name + '</option>';
+                    }
+                    console.log(dropdown);
+                    document.getElementById('datasets').innerHTML = dropdown;
+                }
+            });
+
+            // generate json from the question details
+            function addQuestion() {
+                let formData = {}
+                const tooltip = document.getElementById("tooltip");
+                const attributes = tooltip.querySelectorAll(".attribute");
+
+                const id = tooltip.querySelector("#id").value;
+                const q = tooltip.querySelector("#q").value;
+                const qlink = tooltip.querySelector("#qlink").value;
+                const a = tooltip.querySelector("#a").value;
+                const alink = tooltip.querySelector("#alink").value;
+                const bl_x = tooltip.querySelector("#bl_x").value;
+                const bl_y = tooltip.querySelector("#bl_y").value;
+                const tr_x = tooltip.querySelector("#tr_x").value;
+                const tr_y = tooltip.querySelector("#tr_y").value;
+                const d = tooltip.querySelector("#d").value;
+                const dtype = tooltip.querySelector("#dtype").value;
+                const date = tooltip.querySelector("#date").value;
+
+                if (id && q && qlink && a && alink && bl_x && bl_y && tr_x && tr_y && d && dtype && date) {
+                    formData = {
+                        "_id": id, 
+                        "question": q, 
+                        "question_link": qlink, 
+                        "answer": a, 
+                        "answer_link": alink,
+                        "answer_stats": {
+                            "bottom_left": [bl_x, bl_y],
+                            "top_right": [tr_x, tr_y]
+                        },
+                        "dataset": d, 
+                        "dataset_type": dtype, 
+                        "date": date
+                    };
+                    for (let i = 0; i < attributes.length; i++) {
+                        if (attributes[i].checked) {
+                            formData[attributes[i].name] = attributes[i].value;
+                        }
+                    }
+                    const newWindow = window.open();
+                    newWindow.document.write(`<h2>Just click once on the generated text to Copy it!!<br> The, Paste this text into <b>data.json</b> file</h2><pre id='question_json'>${JSON.stringify(formData, null, 4)}</pre>`);
+                    // https://stackoverflow.com/questions/45071353/copy-text-string-on-click/75721119#75721119
+                    const scriptElement = newWindow.document.createElement('script');
+                        scriptElement.textContent = `
+                        const question_json = document.getElementById("question_json");
+                        question_json.onclick = function() {
+                            document.execCommand("copy");
+                        }
+                        question_json.addEventListener("copy", function(event) {
+                            event.preventDefault();
+                            if (event.clipboardData) {
+                                event.clipboardData.setData("text/plain", question_json.textContent);
+                                console.log(event.clipboardData.getData("text"));
+                            }
+                        });`;
+                    newWindow.document.body.appendChild(scriptElement);
+                }
+            }
+
+            function writeValueToHTML(attributeValue) {
+                let html = "";
+                if (typeof attributeValue === 'string')
+                    html += "\""+attributeValue+"\"";
+                else if (typeof attributeValue === 'number')
+                    html += attributeValue;
+                else if (Array.isArray(attributeValue)) {
+                    html += "["+attributeValue.toString+"]";
+                } else if (typeof attributeValue === 'object') {
+                    html += "{"
+                    let first = true;
+                    for (const key in attributeValue) {
+                        if (!first)
+                            html += ", "
+                        html += key +" &rarr;"+ writeValueToHTML(attributeValue[key]);
+                        first = false;
+                    }
+                    html += "}"
+                }
+                return html;
+            }
+
+            function displayXYZData(data, position, dataset, extents) {
+                const tooltip = document.getElementById("tooltip");
+                tooltip.style.display = data ? '' : 'none';
+                if (data) {
+                    tooltipOverlay[0].setPosition(position);
+                    const attributeNames = Object.keys(data);
+                    let html = "";
+                    for (let i = 0; i < attributeNames.length; i++) {
+                        const attributeName = attributeNames[i];
+                        const attributeValue = writeValueToHTML(data[attributeName]);
+                        html += `<input type="checkbox" class="attribute" name="${attributeName}" value=${attributeValue}>`;
+                        html += attributeName + ": ";
+                        html += attributeValue;
+                        html += "<br/>"
+                    }
+                    html += `_id : <input id="id" type="number" name="id"><br>`;
+                    html += `question : <input id="q" type="text" name="q"><br>`;
+                    html += `question_link : <input id="qlink" type="url" name="qlink"><br>`;
+                    html += `answer : <input id="a" type="text" name="a"><br>`;
+                    html += `answer_link : <input id="alink" type="url" name="alink"><br>`;
+                    html += `answer bottom_left x : <input id="bl_x" type="number" name="bl_x" value="${extents[0]}"><br>`;
+                    html += `answer bottom_left y : <input id="bl_y" type="number" name="bl_y" value="${extents[1]}"><br>`
+                    html += `answer top_right x : <input id="tr_x" type="number" name="tr_x" value="${extents[2]}"><br>`;
+                    html += `answer top_right y : <input id="tr_y" type="number" name="tr_y" value="${extents[3]}"><br>`;
+                    html += `dataset : <input id="d" type="text" name="d" value="${dataset}"><br>`;
+                    html += `dataset_type : <input id="dtype" type="text" name="dtype" value="large"><br>`;
+                    html += `date : <input id="date" type="date" name="date"><br>`;
+                    html += `<input id="addq" type="submit" value="add question"><br>`;
+
+                    tooltip.innerHTML = html;
+                }
+            }
+
+            function displayGeoJSONData(event) {
+                const tooltip = document.getElementById("tooltip");
+                const pixel = event.pixel;
+                const feature = map.forEachFeatureAtPixel(pixel, function(feature) {
+                    return feature;
+                });
+                tooltip.style.display = feature ? '' : 'none';
+                if (feature) {
+                    tooltipOverlay[0].setPosition(event.coordinate);
+                    const attributeNames = feature.getKeys();
+                    let html = "";
+                    for (let i = 0; i < attributeNames.length; i++) {
+                        const attributeName = attributeNames[i];
+                        if (attributeName != feature.getGeometryName()) {
+                            const attributeValue = feature.get(attributeName)
+                            html += `<input type="checkbox" class="attribute" name="${attributeName}" value=${attributeValue}>`;
+                            html += attributeName + ": " + attributeValue + "<br/>"
+                        }
+                    }
+                    // html += `_id : <input id="id" type="number" name="id"><br>`;
+                    html += `question : <input id="q" type="text" name="q"><br>`;
+                    html += `question_link : <input id="qlink" type="url" name="qlink"><br>`;
+                    html += `answer : <input id="a" type="text" name="a"><br>`;
+                    html += `answer_link : <input id="alink" type="url" name="alink"><br>`;
+                    html += `answer bottom_left x : <input id="bl_x" type="number" name="bl_x"><br>`;
+                    html += `answer bottom_left y : <input id="bl_y" type="number" name="bl_y"><br>`
+                    html += `answer top_right x : <input id="tr_x" type="number" name="tr_x"><br>`;
+                    html += `answer top_right y : <input id="tr_y" type="number" name="tr_y"><br>`;
+                    html += `dataset : <input id="d" type="text" name="d"><br>`;
+                    html += `dataset_type : <input id="dtype" type="text" name="dtype" value="small"><br>`;
+                    html += `date : <input id="date" type="date" name="date"><br>`;
+                    html += `<input id="addq" type="submit" value="add question"><br>`;
+
+                    tooltip.innerHTML = html;
+                }
+            }
+
+            function tileClickHandler(event) {
+                const dropdown = document.getElementById('datasets');
+                const datasetName = dropdown.options[dropdown.selectedIndex].text;
+                const px = event.pixel;
+                const southwest = ol.proj.transform(map.getCoordinateFromPixel([px[0] - 3, px[1] + 3]), 'EPSG:3857', 'EPSG:4326');
+                const northeast = ol.proj.transform(map.getCoordinateFromPixel([px[0] + 3, px[1] - 3]), 'EPSG:3857', 'EPSG:4326');
+                const opx = map.getCoordinateFromPixel(event.pixel);
+                const url = `https://star.cs.ucr.edu/datasets/${datasetName}/view.json?mbr=${southwest[0]},${southwest[1]},${northeast[0]},${northeast[1]}&extents=1`;
+                (async() => {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    if (!data.out_bound) displayXYZData(data, opx, datasetName, data.extents);
+                    else tooltip.style.display = 'none';
+                })();
+            }
+
+            // get the name of the selected dataset
+            function handleDatasetChange(event) {
+                const datasetID = document.getElementById('datasets').value;
+                getJSON("https://star.cs.ucr.edu/datasets/"+datasetID+".json", function(err, data) {
+                    if (err !== null) console.log('Something went wrong: ', err);
+                    else {
+                        const visualization = data.dataset.visualization;
+                        console.log(data)
+                        const datasetName = data.dataset.name;
+                        if (visualization.type === "Tile") {
+                            const newLayer = new ol.layer.Tile({
+                                source: new ol.source.XYZ({
+                                    url: `https://star.cs.ucr.edu/${visualization.url}`,
+                                    minZoom: 0,
+                                    maxZoom: 19
+                                }),
+                                visible: true,
+                                preload: Infinity,
+                                useInterimTilesOnError: true
+                            });
+                            if (map.getLayers().getLength() > 1) map.removeLayer(map.getLayers().item(1));
+                            map.addLayer(newLayer);
+                            if (map.onclick) map.removeEventListener("click", displayGeoJSONData);
+                            map.addEventListener("click", tileClickHandler);
+                        } else {
+                            const newLayer = new ol.layer.Vector({
+                                source: new ol.source.Vector({
+                                    format: new ol.format.GeoJSON(),
+                                    url: `https://star.cs.ucr.edu/${visualization.url}`
+                                }),
+                                style: function() {
+                                    return new ol.style.Style({
+                                        stroke: new ol.style.Stroke({
+                                            color: 'black',
+                                            width: 1
+                                        }),
+                                        fill: new ol.style.Fill({
+                                            color: 'rgba(211,211,211,0.5)'
+                                        })
+                                    });
+                                },
+                                visible: true,
+                            });
+                            if (map.getLayers().getLength() > 1) map.removeLayer(map.getLayers().item(1));
+                            map.addLayer(newLayer);
+                            map.getLayers().item(0).setOpacity(0.5);
+                            if (map.onclick) map.removeEventListener("click", tileClickHandler);
+                            map.addEventListener("click", displayGeoJSONData);
+                        }
+                    }
+                });
+            };
+
+            document.getElementById("tooltip").onclick = function () { return addQuestion(); }
+        </script>
     </body>
 </html>

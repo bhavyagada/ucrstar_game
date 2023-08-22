@@ -481,7 +481,13 @@ export function submitAnswer() {
 	for (let key in scoreData) {
 		data.append(key, scoreData[key]);
 	}
-	data.append("other", submit.name);
+    if (submit instanceof HTMLCollection) {
+        data.append("other", submit[0].name);
+    } else {
+        data.append("other", submit.name);
+    }
+    console.log(submit);
+    console.log(submit instanceof HTMLCollection ? submit[0].name : submit.name);
 	console.log(data);
 
 	(async() => {

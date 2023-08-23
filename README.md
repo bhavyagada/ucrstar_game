@@ -18,27 +18,13 @@ brew install mongodb-community
 ```
 <a name="sample-questions"></a>
 ## import sample questions (data.json) into mongoDB
+Edit the file `data.json` and adjust the date of at least one question to point to today's date.
 Run the following command
 ```console
 mongoimport -d ucrstar -c game --file data.json --jsonArray --drop
 ```
 Alternatively, the MongoDB Compass GUI application can be used.<br>
 Create a database ```ucrstar```, add a collection ```game``` to it and use the "ADD DATA" button to import the ```data.json``` file.
-
-## start the client
-Move to the subdirectory ```client/```
-### install dependencies and run locally
-Run the following commands
-```console
-npm install
-npm start
-```
-### env files
-In the ```client/``` subdirectory, create ```.env.development``` and ```.env.production``` to store environment specific variables to be used in the application.
-For now, it only contains the following keys: <br>
-VITE_BASE_URL="http://localhost:8000" (for development) and <br>
-VITE_GMAPS_API="API_KEY" (for google maps search) <br>
-but more can be added later.
 
 ## start the server
 Move to the subdirectory ```server/```
@@ -47,6 +33,22 @@ Run the following commands
 ```console
 pip install -r requirements.txt
 python3 -m http.server --cgi
+```
+
+## start the client
+Move to the subdirectory ```client/```
+### env files
+In the ```client/``` subdirectory, create ```.env.development``` and ```.env.production``` to store environment specific variables to be used in the application.
+For now, it only contains the following keys: <br>
+VITE_BASE_URL="http://localhost:8000" (for development) and <br>
+VITE_GMAPS_API="API_KEY" (for google maps search) <br>
+but more can be added later.
+
+### install dependencies and run locally
+Run the following commands
+```console
+npm install
+npm start
 ```
 
 # for production
@@ -79,4 +81,4 @@ The URL in the client .env files might need to be changed accordingly.
 - Provide some details about the question.
 - Click on the generated JSON object to copy it.
 - Paste the copied text into the ```data.json``` file.
-- Now, [import sample questions](https://github.com/bhavyagada/ucrstar_game#import-sample-questions-datajson-into-mongodb)
+- Now, [import sample questions](#import-sample-questions-datajson-into-mongodb)

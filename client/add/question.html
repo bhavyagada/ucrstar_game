@@ -152,26 +152,28 @@
                 if (data) {
                     tooltipOverlay[0].setPosition(position);
                     const attributeNames = Object.keys(data);
-                    let html = "";
+                    let html = "Check the unique attribute used to verify the answer:<br/>";
                     for (let i = 0; i < attributeNames.length; i++) {
                         const attributeName = attributeNames[i];
-                        const attributeValue = writeValueToHTML(data[attributeName]);
-                        html += `<input type="checkbox" class="attribute" name="${attributeName}" value=${attributeValue}>`;
-                        html += attributeName + ": ";
-                        html += attributeValue;
-                        html += "<br/>"
+                        if (attributeName != "extents") {
+                          const attributeValue = writeValueToHTML(data[attributeName]);
+                          html += `<input type="checkbox" class="attribute" name="${attributeName}" value=${attributeValue}>`;
+                          html += attributeName + ": ";
+                          html += attributeValue;
+                          html += "<br/>"
+                        }
                     }
                     html += `_id : <input id="id" type="number" name="id"><br>`;
                     html += `question : <input id="q" type="text" name="q"><br>`;
                     html += `question_link : <input id="qlink" type="url" name="qlink"><br>`;
                     html += `answer : <input id="a" type="text" name="a"><br>`;
                     html += `answer_link : <input id="alink" type="url" name="alink"><br>`;
-                    html += `answer bottom_left x : <input id="bl_x" type="number" name="bl_x" value="${extents[0]}"><br>`;
-                    html += `answer bottom_left y : <input id="bl_y" type="number" name="bl_y" value="${extents[1]}"><br>`
-                    html += `answer top_right x : <input id="tr_x" type="number" name="tr_x" value="${extents[2]}"><br>`;
-                    html += `answer top_right y : <input id="tr_y" type="number" name="tr_y" value="${extents[3]}"><br>`;
-                    html += `dataset : <input id="d" type="text" name="d" value="${dataset}"><br>`;
-                    html += `dataset_type : <input id="dtype" type="text" name="dtype" value="large"><br>`;
+                    html += `<input id="bl_x" type="hidden" name="bl_x" value="${extents[0]}">`;
+                    html += `<input id="bl_y" type="hidden" name="bl_y" value="${extents[1]}">`
+                    html += `<input id="tr_x" type="hidden" name="tr_x" value="${extents[2]}">`;
+                    html += `<input id="tr_y" type="hidden" name="tr_y" value="${extents[3]}">`;
+                    html += `<input id="d" type="hidden" name="d" value="${dataset}">`;
+                    html += `<input id="dtype" type="hidden" name="dtype" value="large"><br>`;
                     html += `date : <input id="date" type="date" name="date"><br>`;
                     html += `<input id="addq" type="submit" value="add question"><br>`;
 

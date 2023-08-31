@@ -169,25 +169,17 @@ export function getAnswerExtent() {
 }
 
 function writeValueToHTML(attributeValue) {
-    let html = "";
-    if (typeof attributeValue === 'string')
-        html += "\""+attributeValue+"\"";
-    else if (typeof attributeValue === 'number')
-        html += attributeValue;
-    else if (Array.isArray(attributeValue)) {
-        html += "["+attributeValue.toString+"]";
+    if (typeof attributeValue === 'string') {
+        return `"${attributeValue}"`;
+    } else if (typeof attributeValue === 'number') {
+        return attributeValue.toString();
+    } else if (Array.isArray(attributeValue)) {
+        return `[${attributeValue.join(", ")}]`;
     } else if (typeof attributeValue === 'object') {
-        html += "{"
-        let first = true;
-        for (const key in attributeValue) {
-            if (!first)
-                html += ", "
-            html += key +" &rarr;"+ writeValueToHTML(attributeValue[key]);
-            first = false;
-        }
-        html += "}"
+        const keyValuePairs = Object.entries(attributeValue).map(([key, value]) => `${key} &rarr; ${writeValueToHTML(value)}`);
+        return `{${keyValuePairs.join(", ")}}`;
     }
-    return html;
+    return "";
 }
 
 function displayXYZData(data, position, dataset) {
@@ -196,13 +188,7 @@ function displayXYZData(data, position, dataset) {
     if (data) {
         tooltipOverlay[0].setPosition(position);
         const attributeNames = Object.keys(data);
-        let html = "";
-        for (let i = 0; i < attributeNames.length; i++) {
-            const attributeName = attributeNames[i];
-            html += attributeName + ": ";
-            html += writeValueToHTML(data[attributeName]);
-            html += "<br/>"
-        }
+        let html = attributeNames.map(attributeName => `${attributeName}: ${writeValueToHTML(data[attributeName])}</br>`).join('');
         html += `<input id="submit" type="submit" value="submit answer" name=${writeValueToHTML(data["attr#0"])}>`;
 
         tooltip.innerHTML = html;
@@ -212,21 +198,13 @@ function displayXYZData(data, position, dataset) {
 function displayGeoJSONData(event) {
     const tooltip = document.getElementById("tooltip");
     const pixel = event.pixel;
-    const feature = map.forEachFeatureAtPixel(pixel, function(feature) {
-        return feature;
-    });
+    const feature = map.forEachFeatureAtPixel(pixel, feature => feature);
     tooltip.style.display = feature ? '' : 'none';
+
     if (feature) {
         tooltipOverlay[0].setPosition(event.coordinate);
-        const attributeNames = feature.getKeys();
-        let html = "";
-        for (let i = 0; i < attributeNames.length; i++) {
-            const attributeName = attributeNames[i];
-            if (attributeName != feature.getGeometryName()) {
-                const attributeValue = feature.get(attributeName)
-                html += attributeName + ": " + attributeValue + "<br/>"
-            }
-        }
+        const attributeNames = feature.getKeys().filter(name => name !== feature.getGeometryName());
+        let html = attributeNames.map(attributeName => `${attributeName}: ${feature.get(attributeName)}<br/>`).join('');
         html += `<input id="submit" type="submit" value="submit answer" name=${attributeNames["OBJECTID"]}>`;
 
         tooltip.innerHTML = html;

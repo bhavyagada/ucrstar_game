@@ -8,38 +8,47 @@ import {
     transformExtent
 } from './map';
 
+// check and set a value in local storage
+export function checkAndSetLocalStorage(key, defaultValue) {
+    const storedValue = localStorage.getItem(key);
+    if (storedValue === null) { // if key doesn't exist, set it
+        localStorage.setItem(key, JSON.stringify(defaultValue));
+        return defaultValue;
+    }
+    return JSON.parse(storedValue);
+}
+
 // display question
 export function displayQuestion(question, questionLink) {
     // break question and put link in brackets as 'start here'
-    const breakQuestion = question.split("[]");
-    const a = document.getElementById("question-link");
-    a.href = questionLink
-    a.insertAdjacentText('beforebegin', breakQuestion[0]);
-    a.insertAdjacentText('afterend', breakQuestion[1]);
+    const [beforeLink, afterLink] = question.split("[]");
+    const questionElement = document.getElementById("question-link");
+    questionElement.href = questionLink;
+    questionElement.insertAdjacentText('beforebegin', beforeLink);
+    questionElement.insertAdjacentText('afterend', afterLink);
 }
 
 // get location coordinates and zoom level from url
 export function getMapDetailsFromUrl(url) {
-    const link = new URL(url);
-    const hash = link.hash.substring(1);
-  
-    const result = hash.split('&').reduce(function (res, item) {
-        const parts = item.split('=');
-        res[parts[0]] = parts[1];
+    const { hash } = new URL(url);
+    const result = hash.substring(1).split('&').reduce((res, item) => {
+        const [key, value] = item.split('=');
+        res[key] = value;
         return res;
     }, {});
-  
+
     return [result.center.split(','), result.zoom];
 }
 
-// display location on map
+// display initial position of question on map
 export function displayMap(url) {
     const [location, zoom] = getMapDetailsFromUrl(url);
     const center = transform([parseFloat(location[1]), parseFloat(location[0])], 'EPSG:4326', 'EPSG:3857');
-  
+
     view.animate({center: center, zoom: zoom, duration: 2000});
 }
 
+// to display the game over message
 export function displayGameOver(win, tutorial) {
     const messageBox = document.getElementById("message");
     const colorBoxes = {
@@ -62,44 +71,44 @@ export function displayGameOver(win, tutorial) {
         "win": "&#127942;"
     }
     let text = ``;
-    let topScore = 0;
-    if (tutorial) {
-        topScore = 100;
-    } else {
-        topScore = 0;
-        for(const [key, value] of Object.entries(JSON.parse(localStorage.getItem("history")))) {
-            if(value["score"] > topScore) {
-                topScore = value["score"];
-            }
-            const color = getScoreStyle(value["score"]);
-            text += encodeURI(`${colorBoxes[color]} ${value["score"]} ${hintUnicodes[value["hint"]]}\n`);
+    let topScore = tutorial ? 100 : 0;
+    if (!tutorial) {
+        const history = JSON.parse(localStorage.getItem("history"))
+        for(const value of Object.values(history)) {
+            topScore = Math.max(topScore, value.score);
+            const color = getScoreStyle(value.score);
+            text += encodeURIComponent(`${colorBoxes[color]} ${value.score} ${hintUnicodes[value.hint]}\n`);
         }
         console.log(topScore);
     }
-    if (win || (topScore === 100)) {
-        messageBox.innerHTML = `Congratulations! You got the perfect score of ${topScore}!<br> Come back tomorrow for a new game!<br>`
-    } else {
-        messageBox.innerHTML = `Game Over! You used up all your attempts!<br> Your highest score is ${topScore}!<br>`;
-    }
+
     const share = document.getElementById("share");
     text += `I just finished playing this game! Can you beat my top score of ${topScore}?`;
+
+    const gameOverText = win || topScore === 100 
+        ? `Congratulations! You got the perfect score of ${topScore}!<br> Come back tomorrow for a new game!<br>`
+        : `Game Over! You used up all your attempts!<br> Your highest score is ${topScore}!<br>`;
+
+    messageBox.innerHTML = gameOverText;
+    
     share.innerHTML = `<hr><br>
         <a id="twitter" href="https://twitter.com/intent/tweet?text=${text}&url=https://star.cs.ucr.edu/" target="_blank" aria-label="Share on Twitter">
             <i class="bi bi-twitter">Share on twitter!</i>
         </a>&nbsp;
         <a id="fb" href="https://www.facebook.com/sharer/sharer.php?u=https://star.cs.ucr.edu/&quote=${text}" target="_blank" aria-label="Share on Facebook">
             <i class="bi bi-facebook">Share on facebook!</i>
-        </a>
-    `
+        </a>`;
+
     document.getElementById("game-over").style.display = "block";
 }
 
+// styling according to the scores
 function getScoreStyle(score) {
     if (score < 35) {
         return "#FF0000";
-    } else if (score > 35 && score < 70) {
+    } else if (score < 70) {
         return "#FFA500";
-    } else if (score > 70 && score < 100) {
+    } else if (score < 100) {
         return "#FFDD22";
     } else {
         return "#4CBB17";
@@ -128,15 +137,13 @@ export function displayHintsForTutorial() {
 // count number of attempts
 export function attemptCount() {
     let count = parseInt(localStorage.getItem("attemptCount"));
-    if (count === -1) {
-        return;
+    
+    if (count !== -1 && count <= 4) {
+        localStorage.setItem("attemptCount", count + 1);
+        console.log(count + 1);
     } else if (count > 4) {
         localStorage.setItem("attemptCount", -1); // game over
-    } else {
-        count = count + 1;
-        localStorage.setItem("attemptCount", count);
     }
-    console.log(count);
 }
 
 export function tutorialMode(mode, dataset, type) {
@@ -293,7 +300,7 @@ export async function historyMode(tutorial) {
     const history = document.getElementById("history");
     if (historyData === null || historyData.length < 0) {
         history.innerHTML = `<button disabled="disabled" style="color:#000;width:100%;margin:2px;
-        height:20px;font-weight:900;box-sizing:border-box;border-radius:5px;">No history!</button>`;
+        height:20px;font-weight:900;box-sizing:border-box;border-radius:5px;">5 attempts left!</button>`;
     } else {
         if (window.innerWidth > 480) {
             if (tutorial && !localStorage.getItem("history")) {
@@ -471,8 +478,7 @@ function animateScoreAndHints(data, count) {
     displayDataset(localGameData.dataset, localGameData.dataset_type);
 }
 
-export function submitAnswer() {
-    let win = false;
+export async function submitAnswer() {
     const tutorial = false;
 	const count = parseInt(localStorage.getItem("attemptCount"));
 	const scoreData = getAnswerExtent();
@@ -481,57 +487,48 @@ export function submitAnswer() {
 	for (let key in scoreData) {
 		data.append(key, scoreData[key]);
 	}
-    if (submit instanceof HTMLCollection) {
-        data.append("other", submit[0].name);
-    } else {
-        data.append("other", submit.name);
-    }
-    console.log(submit);
-    console.log(submit instanceof HTMLCollection ? submit[0].name : submit.name);
-	console.log(data);
+    data.append("other", submit instanceof HTMLCollection ? submit[0].name : submit.name);
 
-	(async() => {
+	try {
 		const response = await fetch(`${import.meta.env.VITE_BASE_URL}/cgi-bin/answer.cgi`, {
 			method: 'POST',
 			body: data // send answer attempt to server for check
 		});
 
 		const responseData = await response.json();
-		console.log(responseData.response);
+        const hint = responseData.response.hint;
+        const score = responseData.response.score;
+        const overlap = responseData.response.overlap;
 
 		// save attempt history
-		scoreData["hint"] = responseData.response.hint;
-		scoreData["score"] = responseData.response.score;
-		scoreData["overlap"] = responseData.response.overlap;
+		scoreData["hint"] = hint;
+		scoreData["score"] = score;
+		scoreData["overlap"] = overlap;
+
 		const localHistoryData = localStorage.getItem("history");
 		if (!localHistoryData) {
 			localStorage.setItem("history", JSON.stringify([scoreData]));
 		} else if (localHistoryData && count > 0 && count < 6){
 			let historyData = JSON.parse(localHistoryData);
-			console.log(historyData);
 			historyData.push(scoreData);
 			localStorage.setItem("history", JSON.stringify(historyData));
 		}
 
-		if (responseData.response.score === 100 && count !== -1) {
-            win = true;
+        const win = (score === 100) && (count !== -1);
+        if (win) {
             animateScoreAndHints(responseData.response, count);
             setTimeout(() => {
                 displayGameOver(win, tutorial);
             }, 5000);
 			localStorage.setItem("attemptCount", -1);
-            return;
-		}
-
-		if (count === -1) {
+		} else if (count === -1) {
 			displayGameOver(win, tutorial);
-            return;
-		}
-
-		if (count > 0 && count < 6) {
+		} else if (count > 0 && count < 6) {
 			animateScoreAndHints(responseData.response, count);
 		}
-	})();
+	} catch (error) {
+        console.error('Something went wrong: ', error);
+    }
 
 	// count number of attemps and stop after 5 attempts
 	attemptCount();

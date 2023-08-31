@@ -1,53 +1,57 @@
 import * as map from './map';
 import * as helpers from './helpers';
 
-// fetch question
+// function to initialize game
 (async() => {
-	console.log(import.meta.env.VITE_BASE_URL)
-	const response = await fetch(`${import.meta.env.VITE_BASE_URL}/cgi-bin/app.cgi`);
+	// get environment variables
+	const baseURL = import.meta.env.VITE_BASE_URL;
+    const gmapsAPIKey = import.meta.env.VITE_GMAPS_API;
+
+	// fetch question data
+	const response = await fetch(`${baseURL}/cgi-bin/app.cgi`);
 	const responseData = await response.json();
 	console.log(responseData);
 
-	// save game data
-	let gameData = "";
-	const localGameData = localStorage.getItem("game");
-	if (!localGameData) {
-		gameData = responseData.game
-		localStorage.setItem("game", JSON.stringify(gameData));
-	} else {
-		gameData = JSON.parse(localGameData);
-	}
-	// save attempt count
-	if (!localStorage.getItem("attemptCount")) {
-		localStorage.setItem("attemptCount", 1); // game hasn't started
-	}
+	// save game data locally
+	const gameData = helpers.checkAndSetLocalStorage("game", responseData.game);
 
-	// get the google maps api url and add it in html
+	// save attempt count locally
+	helpers.checkAndSetLocalStorage("attemptCount", 1);
+
+	// get the google maps api url and add it in html (for search)
 	const gmaps_script = document.getElementById("gmaps");
-	gmaps_script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GMAPS_API}&callback=initAutocomplete&libraries=places&v=weekly`;
+	gmaps_script.src = `https://maps.googleapis.com/maps/api/js?key=${gmapsAPIKey}&callback=initAutocomplete&libraries=places&v=weekly`;
 
+	// show the question in question box
 	helpers.displayQuestion(gameData.question, gameData.question_link);
 	document.getElementById("title").innerHTML += `Question ${gameData._id}`;
 	
-	// has to be deleted later
+	// TODO: delete
 	// map.displayAnswerBox(gameData.answer_stats.bottom_left.concat(gameData.answer_stats.top_right));
 
-	// start position with dataset
+	// visualize dataset and start at initial position of the question
 	helpers.displayMap(gameData.question_link)
 	map.displayDataset(gameData.dataset, gameData.dataset_type);
+
+	// handle tutorial mode
 	const openTutorial = document.getElementById("tutorial-quiz");
 	openTutorial.onclick = function() { 
 		return helpers.tutorialMode(true, gameData.dataset, gameData.dataset_type);
 	}
 })();
 
-// submit answer
-const submit = document.getElementById("submit");
-submit.onclick = function () {return helpers.submitAnswer();}
+// event delegation for multiple click handlers
+document.addEventListener("click", (event) => {
+    const targetId = event.target.id;
 
-// alternate submit answer
-const tooltip = document.getElementById("tooltip");
-tooltip.onclick = function () { return helpers.submitAnswer(); }
+    if (targetId === "question-link") { // takes you to initial position of question
+        event.preventDefault();
+        const localGameData = JSON.parse(localStorage.getItem("game"));
+        helpers.displayMap(localGameData.question_link);
+    } else if (targetId === "submit" || targetId === "tooltip") { // either get hint or submit answer
+        helpers.submitAnswer();
+    }
+});
 
 // stop score & hint animation when clicked on background
 document.onclick = function () {
@@ -57,7 +61,7 @@ document.onclick = function () {
 	helpers.historyMode(false);
 }
 
-// to open or close modal
+// open or close game over modal message
 const gameover = document.getElementById("game-over");
 const closegameover = document.getElementById("close-answer");
 closegameover.onclick = function() {
@@ -65,12 +69,6 @@ closegameover.onclick = function() {
 }
 
 // show history when window loads
-window.onload = () => {
-	return helpers.historyMode(false);
-}
-
-// reload screen to show history if window is resized
-// window.addEventListener('resize',() => {
-// 	location.reload();
-// 	return helpers.historyMode(false);
-// })
+window.addEventListener("load", () => {
+    helpers.historyMode(false);
+});

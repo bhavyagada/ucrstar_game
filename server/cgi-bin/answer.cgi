@@ -5,12 +5,7 @@ import math
 import utils
 import cgi
 import json
-import logging
 from pymongo import MongoClient
-
-# for debugging
-log_file = os.path.join(os.getcwd(), "server.log")
-logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 
 current = cgi.FieldStorage()
 bottom_left = current.getvalue('bottom_left')

@@ -218,7 +218,7 @@ export function displayDataset(dataset, type) {
         map.addLayer(new TileLayer({
             source: new XYZ({
                 tileUrlFunction: function(tileCoord) {
-                    return `https://star.cs.ucr.edu/dynamic/visualize.cgi/${dataset}/plot/tile-${tileCoord[0]}-${tileCoord[1]}-${tileCoord[2]}.png`
+                    return `https://star.cs.ucr.edu/dynamic/visualize.cgi/${dataset}/plot.zip/tile-${tileCoord[0]}-${tileCoord[1]}-${tileCoord[2]}.png`
                 },
                 minZoom: 0,
                 maxZoom: 19

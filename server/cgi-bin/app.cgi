@@ -8,7 +8,7 @@ from pymongo import MongoClient
 def get_question():
     con = MongoClient(utils.MONGODB_URL)
     db = con.ucrstar
-    game = db.game.find_one({"date": str(utils.TODAY)})
+    game = db.game.find_one({"date": str(utils.TODAY)}, {"_id": 1, "question": 1, "question_link": 1, "dataset": 1, "dataset_type": 1})
     con.close()
     if game:
         return game
